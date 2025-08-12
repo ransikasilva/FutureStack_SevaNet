@@ -1,0 +1,15 @@
+This is a placeholder for your logo.png file.
+
+To add your logo:
+1. Place your logo.png file in the /public/ folder
+2. Make sure it's named exactly "logo.png"
+3. Recommended size: 512x512 pixels or smaller
+4. The logo will automatically appear in all locations where the SevaNet logo is displayed
+
+Current logo locations:
+- Homepage header and footer
+- Login and registration pages
+- Dashboard sidebar
+- All navigation areas
+
+The app will automatically fall back to the Building2 icon if logo.png is not found.
