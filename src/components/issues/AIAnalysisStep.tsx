@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { Camera, Upload, MapPin, Zap, Clock, AlertTriangle, CheckCircle, SkipForward, Loader } from 'lucide-react'
+import { LocationMap } from '../map/LocationMap'
 
 interface AIAnalysis {
   detected_issue: string
@@ -225,7 +226,7 @@ export function AIAnalysisStep({ onAnalysisComplete, onSkip }: AIAnalysisStepPro
 
       {/* Location Section */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center">
             <MapPin className="h-5 w-5 text-blue-600 mr-2" />
             <span className="text-sm font-medium text-blue-800">
@@ -250,8 +251,33 @@ export function AIAnalysisStep({ onAnalysisComplete, onSkip }: AIAnalysisStepPro
             )}
           </button>
         </div>
+        
         {location && (
-          <p className="text-xs text-blue-600 mt-2">{location.address}</p>
+          <div className="space-y-3">
+            {/* Address display */}
+            <div className="bg-white rounded-lg p-3 border border-blue-200">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-gray-900">{location.address}</p>
+                  <p className="text-xs text-gray-500">
+                    {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Map display */}
+            <LocationMap
+              latitude={location.latitude}
+              longitude={location.longitude}
+              address={location.address}
+              className="h-40"
+              zoom={18} // High zoom for street-level detail
+            />
+          </div>
         )}
       </div>
 
