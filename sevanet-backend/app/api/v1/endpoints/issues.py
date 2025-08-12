@@ -1,13 +1,11 @@
-from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
-from sqlalchemy.orm import Session
-from uuid import UUID
+from typing import Optional
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 import uuid
 import json
 
-from app.database import get_db
-from app.schemas.issues import Issue, IssueCreate, IssueUpdate, Authority, IssueCategory, AIAnalysis
-from app.crud.issues import issue_crud, authority_crud
+from app.crud.supabase_issues import supabase_issues
+from app.services.gemini_analysis import gemini_service
+from app.services.supabase_client import supabase_client
 
 router = APIRouter()
 
@@ -90,32 +88,75 @@ async def report_issue(
     location: str = Form(...),
     user_id: str = Form(...),
     severity_level: int = Form(1),
-    image: UploadFile = File(None),
-    db: Session = Depends(get_db)
+    latitude: float = Form(None),
+    longitude: float = Form(None),
+    ai_analysis: str = Form(None),
+    image: UploadFile = File(None)
 ):
     """
-    Report a new civic issue (DUMMY IMPLEMENTATION)
+    Report a new civic issue using Supabase REST API
     """
     try:
-        # Generate mock issue ID
-        issue_id = str(uuid.uuid4())
-        
-        # Mock image upload (in real implementation, save to cloud storage)
+        # Handle image upload (in real implementation, save to Supabase storage)
         image_url = None
         if image:
-            image_url = f"https://mock-storage.com/issues/{issue_id}/{image.filename}"
+            image_url = f"https://storage.supabase.co/issues/{uuid.uuid4()}/{image.filename}"
         
-        # Create mock response
-        mock_issue = {
-            "id": issue_id,
+        # Parse AI analysis if provided
+        ai_analysis_data = None
+        if ai_analysis:
+            try:
+                ai_analysis_data = json.loads(ai_analysis)
+            except json.JSONDecodeError:
+                ai_analysis_data = {"raw_analysis": ai_analysis}
+        
+        # Prepare issue data
+        issue_data = {
             "user_id": user_id,
             "category": category,
             "title": title or f"{category.title()} Issue",
             "description": description,
             "location": location,
+            "latitude": latitude,
+            "longitude": longitude,
+            "severity_level": severity_level,
+            "image_url": image_url,
+            "ai_analysis": ai_analysis_data
+        }
+        
+        # Try to save to Supabase first
+        if supabase_client.is_available:
+            try:
+                saved_issue = await supabase_issues.create_issue(issue_data)
+                if saved_issue:
+                    return {
+                        "success": True,
+                        "message": "Issue reported successfully to database",
+                        "issue": saved_issue,
+                        "next_steps": [
+                            f"Your issue has been logged with reference {saved_issue.get('booking_reference')}",
+                            "A government officer will review your submission within 24 hours",
+                            "You will receive SMS and email notifications about status updates",
+                            "Track your issue progress in the 'My Reports' section"
+                        ]
+                    }
+            except Exception as db_error:
+                print(f"Database save failed: {db_error}")
+        
+        # Fallback to mock response
+        mock_issue = {
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "category": category,
+            "title": title or f"{category.title()} Issue",
+            "description": description,
+            "location": location,
+            "latitude": latitude,
+            "longitude": longitude,
             "severity_level": severity_level,
             "status": "pending",
             "image_url": image_url,
+            "ai_analysis": ai_analysis_data,
             "booking_reference": f"ISS{str(uuid.uuid4())[:6].upper()}",
             "created_at": "2025-01-12T10:30:00Z",
             "estimated_resolution": "3-5 working days"
@@ -123,10 +164,10 @@ async def report_issue(
         
         return {
             "success": True,
-            "message": "Issue reported successfully",
+            "message": "Issue reported successfully (mock mode)",
             "issue": mock_issue,
             "next_steps": [
-                "Your issue has been logged with reference " + mock_issue["booking_reference"],
+                f"Your issue has been logged with reference {mock_issue['booking_reference']}",
                 "A government officer will review your submission within 24 hours",
                 "You will receive SMS and email notifications about status updates",
                 "Track your issue progress in the 'My Reports' section"
@@ -140,14 +181,33 @@ async def report_issue(
 async def get_my_reports(
     user_id: str,
     skip: int = 0,
-    limit: int = 10,
-    db: Session = Depends(get_db)
+    limit: int = 10
 ):
     """
-    Get reported issues for a specific user (DUMMY IMPLEMENTATION)
+    Get reported issues for a specific user using Supabase REST API
     """
     try:
-        # Mock reported issues data
+        # Try to fetch from Supabase first
+        if supabase_client.is_available:
+            try:
+                user_issues = await supabase_issues.get_issues_by_user(
+                    user_id=user_id,
+                    limit=limit,
+                    offset=skip
+                )
+                
+                if user_issues:
+                    return {
+                        "success": True,
+                        "message": "Reports fetched from database",
+                        "reports": user_issues,
+                        "total_count": len(user_issues),
+                        "page": skip // limit + 1 if limit > 0 else 1
+                    }
+            except Exception as db_error:
+                print(f"Database fetch failed: {db_error}")
+        
+        # Fallback to mock data
         mock_reports = [
             {
                 "id": str(uuid.uuid4()),
@@ -195,6 +255,7 @@ async def get_my_reports(
         
         return {
             "success": True,
+            "message": "Reports fetched (mock mode)",
             "reports": mock_reports[:limit],
             "total_count": len(mock_reports),
             "page": skip // limit + 1 if limit > 0 else 1
@@ -216,17 +277,36 @@ async def get_issue_categories():
 @router.get("/authorities", response_model=dict)
 async def get_authorities(category: Optional[str] = None):
     """
-    Get list of government authorities (DUMMY IMPLEMENTATION)
+    Get list of government authorities using Supabase REST API
     """
-    authorities = MOCK_AUTHORITIES
-    
-    if category:
-        authorities = [auth for auth in authorities if auth["category"] == category]
-    
-    return {
-        "success": True,
-        "authorities": authorities
-    }
+    try:
+        # Try to fetch from Supabase first
+        if supabase_client.is_available:
+            try:
+                authorities = await supabase_issues.get_authorities(category)
+                if authorities:
+                    return {
+                        "success": True,
+                        "message": "Authorities fetched from database",
+                        "authorities": authorities
+                    }
+            except Exception as db_error:
+                print(f"Database fetch failed: {db_error}")
+        
+        # Fallback to mock data
+        authorities = MOCK_AUTHORITIES
+        
+        if category:
+            authorities = [auth for auth in authorities if auth["category"] == category]
+        
+        return {
+            "success": True,
+            "message": "Authorities fetched (mock mode)",
+            "authorities": authorities
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch authorities: {str(e)}")
 
 @router.post("/{issue_id}/analyze", response_model=dict)
 async def analyze_issue(issue_id: str):
@@ -323,8 +403,7 @@ async def get_issue_status(issue_id: str):
 async def update_issue_status(
     issue_id: str,
     status: str = Form(...),
-    note: str = Form(None),
-    db: Session = Depends(get_db)
+    note: str = Form(None)
 ):
     """
     Update issue status (for officers) - DUMMY IMPLEMENTATION
@@ -340,3 +419,70 @@ async def update_issue_status(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update status: {str(e)}")
+
+@router.post("/analyze-image", response_model=dict)
+async def analyze_image_with_ai(
+    image: UploadFile = File(...),
+    latitude: float = Form(None),
+    longitude: float = Form(None),
+    address: str = Form(None)
+):
+    """
+    AI Analysis of uploaded image to detect civic issues using Google Gemini Vision API
+    """
+    try:
+        # Validate image file
+        if not image.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="Please upload a valid image file")
+        
+        if image.size > 10 * 1024 * 1024:  # 10MB limit
+            raise HTTPException(status_code=400, detail="Image file too large. Maximum size is 10MB")
+        
+        # Read image content
+        image_content = await image.read()
+        
+        # Prepare location context
+        location_context = None
+        if address:
+            location_context = address
+        elif latitude and longitude:
+            location_context = f"GPS Coordinates: {latitude:.6f}, {longitude:.6f}"
+        
+        # Perform AI analysis using Gemini
+        try:
+            analysis_result = await gemini_service.analyze_image(
+                image_content=image_content,
+                location=location_context
+            )
+            
+            return {
+                "success": True,
+                "message": "AI analysis completed successfully",
+                "analysis": analysis_result,
+                "processing_info": {
+                    "model": "Google Gemini Pro Vision",
+                    "image_size": f"{len(image_content)} bytes",
+                    "location_provided": location_context is not None
+                }
+            }
+            
+        except ValueError as ve:
+            # Handle validation errors (missing API key, invalid image, etc.)
+            raise HTTPException(status_code=400, detail=str(ve))
+        
+        except Exception as ai_error:
+            # Handle AI service errors
+            raise HTTPException(
+                status_code=500, 
+                detail=f"AI analysis service error: {str(ai_error)}"
+            )
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        # Handle unexpected errors
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Unexpected error during image analysis: {str(e)}"
+        )

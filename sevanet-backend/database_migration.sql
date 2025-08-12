@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS issues (
     image_url VARCHAR(500),
     status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'under_review', 'assigned', 'in_progress', 'resolved', 'closed')),
     severity_level INTEGER DEFAULT 1 CHECK (severity_level IN (1, 2, 3, 4)),
-    assigned_authority_id UUID REFERENCES authorities(id),
+    assigned_authority_id UUID,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -36,6 +36,23 @@ CREATE TABLE IF NOT EXISTS authorities (
     coverage_area VARCHAR(100),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- ==========================================
+-- ADD FOREIGN KEY CONSTRAINTS (AFTER BOTH TABLES EXIST)
+-- ==========================================
+
+-- Add foreign key constraint for assigned_authority_id (only if not exists)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'fk_issues_authority' 
+        AND table_name = 'issues'
+    ) THEN
+        ALTER TABLE issues ADD CONSTRAINT fk_issues_authority 
+        FOREIGN KEY (assigned_authority_id) REFERENCES authorities(id);
+    END IF;
+END $$;
 
 -- ==========================================
 -- CREATE INDEXES FOR PERFORMANCE

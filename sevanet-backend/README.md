@@ -1,41 +1,57 @@
-# SevaNet Issue Reporting Backend
+# SevaNet Issue Reporting API Backend
 
-FastAPI backend service for the civic issue reporting feature in the SevaNet government portal.
+A FastAPI backend service for AI-powered civic issue reporting with Supabase integration.
 
-## 🏗️ Architecture
+## Features
 
-This backend provides REST API endpoints for:
-- Reporting civic issues (roads, electricity, water, waste, safety, etc.)
-- Tracking reported issues
-- Managing authorities and categories
-- AI analysis of issues (dummy implementation)
+- 🤖 **AI Image Analysis**: Google Gemini 1.5 Flash for civic issue detection
+- 🗄️ **Supabase Integration**: REST API client for database operations
+- 🌐 **RESTful API**: Clean and documented endpoints
+- 🔄 **Graceful Fallbacks**: Works with mock data if database unavailable
+- 📱 **CORS Enabled**: Frontend integration ready
 
-## 📋 Prerequisites
+## Tech Stack
+
+- **Framework**: FastAPI
+- **AI Service**: Google Gemini 1.5 Flash with LangChain
+- **Database**: Supabase (via REST API)
+- **Image Processing**: Pillow
+- **HTTP Client**: httpx
+
+## Prerequisites
 
 - Python 3.8+
-- PostgreSQL (using existing SevaNet database)
-- pip package manager
+- Google Gemini API key
+- Supabase project (optional - works with mock data)
 
-## 🚀 Quick Setup
+## Quick Start
 
-### 1. Install Dependencies
-
+### Installation
 ```bash
-cd sevanet-backend
+# Install dependencies
 pip install -r requirements.txt
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your API keys
+
+# Start the server
+python start_dev.py
 ```
 
-### 2. Environment Configuration
+### Environment Variables
+```bash
+# Google Gemini API (required for AI analysis)
+GOOGLE_API_KEY=your-gemini-api-key
 
-The `.env` file is already configured to use your existing database:
+# Supabase (optional - falls back to mock data)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-```env
-DATABASE_URL=postgresql://postgres:Zaqwer1234@db.ileyyewqhyfclcfdlisg.supabase.co:5432/postgres
-SECRET_KEY=sevanet-issue-reporting-secret-key
-CORS_ORIGINS=["http://localhost:3000"]
-DEBUG=True
-API_V1_STR=/api/v1
+# API Configuration
 PROJECT_NAME=SevaNet Issue Reporting API
+DEBUG=True
 ```
 
 ### 3. Database Migration

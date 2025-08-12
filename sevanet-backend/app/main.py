@@ -2,14 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from decouple import config
 import uvicorn
+import logging
 
 from app.api.v1.api import api_router
-from app.database import engine
-from app.models import issues, authorities
 
-# Create database tables
-issues.Base.metadata.create_all(bind=engine)
-authorities.Base.metadata.create_all(bind=engine)
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Create FastAPI app
 app = FastAPI(
@@ -41,6 +40,20 @@ def read_root():
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
+
+@app.get("/test")
+def test_endpoint():
+    """Test endpoint that doesn't require database"""
+    return {
+        "message": "API is working!",
+        "endpoints": {
+            "health": "/health",
+            "docs": "/docs",
+            "api": "/api/v1",
+            "analyze_image": "/api/v1/issues/analyze-image"
+        },
+        "status": "ready"
+    }
 
 if __name__ == "__main__":
     uvicorn.run(

@@ -29,19 +29,55 @@ const SEVERITY_LEVELS = [
   { value: 4, label: 'Critical', description: 'Safety risk or emergency', color: 'bg-red-100 text-red-800' }
 ]
 
-export function ReportIssueForm() {
+interface PreFilledData {
+  category: string
+  title: string
+  description: string
+  location: string
+  severityLevel: number
+  recommendedAuthority?: {
+    name: string
+    contact_phone: string
+    contact_email: string
+    emergency_contact: string
+  }
+}
+
+interface AIAnalysis {
+  detected_issue: string
+  category: string
+  description: string
+  severity_level: number
+  confidence_score: number
+  recommended_authority: {
+    name: string
+    contact_phone: string
+    contact_email: string
+    emergency_contact: string
+  }
+  suggested_location?: string
+}
+
+interface ReportIssueFormProps {
+  preFilledData?: PreFilledData
+  selectedImage?: File | null
+  aiAnalysis?: AIAnalysis | null
+  onBack?: () => void
+}
+
+export function ReportIssueForm({ preFilledData, selectedImage: initialImage, aiAnalysis, onBack }: ReportIssueFormProps = {}) {
   const { user } = useAuthContext()
   const router = useRouter()
   
   const [formData, setFormData] = useState({
-    category: '',
-    title: '',
-    description: '',
-    location: '',
-    severityLevel: 1
+    category: preFilledData?.category || '',
+    title: preFilledData?.title || '',
+    description: preFilledData?.description || '',
+    location: preFilledData?.location || '',
+    severityLevel: preFilledData?.severityLevel || 1
   })
   
-  const [selectedImage, setSelectedImage] = useState<File | null>(null)
+  const [selectedImage, setSelectedImage] = useState<File | null>(initialImage || null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -185,6 +221,39 @@ export function ReportIssueForm() {
             <div className="ml-3">
               <p className="text-sm text-red-800">{errors.submit}</p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Analysis Info */}
+      {aiAnalysis && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+            </div>
+            <div className="ml-3 flex-1">
+              <h3 className="text-sm font-medium text-blue-800 mb-2">
+                AI Analysis Applied (Confidence: {Math.round(aiAnalysis.confidence_score * 100)}%)
+              </h3>
+              <div className="text-sm text-blue-700">
+                <p><strong>Detected:</strong> {aiAnalysis.detected_issue}</p>
+                <p><strong>Recommended Authority:</strong> {aiAnalysis.recommended_authority.name}</p>
+                <div className="flex space-x-4 mt-2 text-xs">
+                  <span>📞 {aiAnalysis.recommended_authority.contact_phone}</span>
+                  <span>🚨 {aiAnalysis.recommended_authority.emergency_contact}</span>
+                </div>
+              </div>
+            </div>
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="text-blue-600 hover:text-blue-800 text-sm underline"
+              >
+                Re-analyze
+              </button>
+            )}
           </div>
         </div>
       )}
