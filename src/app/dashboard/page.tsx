@@ -4,7 +4,7 @@ import { useAuthContext } from '@/components/auth/AuthProvider'
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { useUserAppointments } from '@/hooks/useAppointments'
-import { Calendar, Clock, FileText, CheckCircle, AlertCircle, Plus } from 'lucide-react'
+import { Calendar, Clock, FileText, CheckCircle, AlertCircle, Plus, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 
@@ -143,7 +143,7 @@ function DashboardContent() {
           <h2 className="text-lg font-medium text-gray-900">Quick Actions</h2>
         </div>
         <div className="p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link
               href="/dashboard/book"
               className="relative group bg-white p-6 rounded-lg border-2 border-dashed border-gray-300 hover:border-primary-400 transition-colors"
@@ -188,6 +188,51 @@ function DashboardContent() {
                 Upload and organize documents
               </p>
             </Link>
+
+            <Link
+              href="/dashboard/report-issue"
+              className="relative group bg-white p-6 rounded-lg border-2 border-dashed border-gray-300 hover:border-red-400 transition-colors"
+            >
+              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="mt-4 text-sm font-medium text-gray-900 text-center">
+                Report Issue
+              </h3>
+              <p className="mt-2 text-sm text-gray-500 text-center">
+                Report civic issues to authorities
+              </p>
+            </Link>
+          </div>
+
+          {/* Issue Reports Section */}
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Link
+              href="/dashboard/my-reports"
+              className="relative group bg-white p-4 rounded-lg border-2 border-dashed border-gray-300 hover:border-red-400 transition-colors"
+            >
+              <div className="flex items-center">
+                <div className="flex items-center justify-center w-8 h-8 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
+                  <FileText className="h-4 w-4 text-red-600" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-gray-900">My Reports</h3>
+                  <p className="text-xs text-gray-500">Track your reported issues</p>
+                </div>
+              </div>
+            </Link>
+
+            <div className="relative bg-gray-50 p-4 rounded-lg border-2 border-dashed border-gray-200">
+              <div className="flex items-center">
+                <div className="flex items-center justify-center w-8 h-8 bg-gray-200 rounded-lg">
+                  <AlertCircle className="h-4 w-4 text-gray-400" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-gray-500">AI Analysis</h3>
+                  <p className="text-xs text-gray-400">Coming soon</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
