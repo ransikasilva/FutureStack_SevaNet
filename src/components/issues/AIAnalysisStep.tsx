@@ -72,14 +72,51 @@ export function AIAnalysisStep({ onAnalysisComplete, onSkip }: AIAnalysisStepPro
         const { latitude, longitude } = position.coords
         
         try {
-          // Reverse geocoding to get address (using a mock service for demo)
-          const address = `Latitude: ${latitude.toFixed(6)}, Longitude: ${longitude.toFixed(6)}`
+          // Reverse geocoding to get human-readable address
+          const formData = new FormData()
+          formData.append('latitude', latitude.toString())
+          formData.append('longitude', longitude.toString())
           
-          setLocation({
-            latitude,
-            longitude,
-            address
+          const geocodeResponse = await fetch('http://localhost:8000/api/v1/issues/location/reverse-geocode', {
+            method: 'POST',
+            body: formData
           })
+          
+          if (geocodeResponse.ok) {
+            const geocodeResult = await geocodeResponse.json()
+            if (geocodeResult.success && geocodeResult.address) {
+              // Extract a clean, readable address
+              const addressComponents = geocodeResult.address.address_components
+              const road = addressComponents.road || ''
+              const suburb = addressComponents.suburb || ''
+              const city = addressComponents.city || ''
+              const district = addressComponents.district || ''
+              
+              // Create a clean address string
+              const addressParts = [road, suburb, city, district].filter(part => part.trim() !== '')
+              const cleanAddress = addressParts.join(', ')
+              
+              setLocation({
+                latitude,
+                longitude,
+                address: cleanAddress || geocodeResult.address.formatted_address
+              })
+            } else {
+              // Fallback to coordinates if reverse geocoding fails
+              setLocation({
+                latitude,
+                longitude,
+                address: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+              })
+            }
+          } else {
+            // Fallback to coordinates
+            setLocation({
+              latitude,
+              longitude,
+              address: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+            })
+          }
         } catch (err) {
           console.error('Geocoding error:', err)
           setLocation({
@@ -116,13 +153,18 @@ export function AIAnalysisStep({ onAnalysisComplete, onSkip }: AIAnalysisStepPro
       formData.append('image', selectedImage)
       
       if (location) {
-        formData.append('latitude', location.latitude.toString())
-        formData.append('longitude', location.longitude.toString())
-        formData.append('address', location.address || '')
+        // Send the address for better location processing
+        if (location.address && !location.address.includes('Latitude:')) {
+          formData.append('location_address', location.address)
+        } else {
+          // Fallback to coordinates if no readable address
+          formData.append('latitude', location.latitude.toString())
+          formData.append('longitude', location.longitude.toString())
+        }
       }
 
-      // Call AI analysis endpoint
-      const response = await fetch('http://localhost:8000/api/v1/issues/analyze-image', {
+      // Call enhanced AI analysis endpoint with location processing
+      const response = await fetch('http://localhost:8000/api/v1/issues/analyze-image-with-location', {
         method: 'POST',
         body: formData
       })

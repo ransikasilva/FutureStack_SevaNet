@@ -6,6 +6,7 @@ import json
 from app.crud.supabase_issues import supabase_issues
 from app.services.gemini_analysis import gemini_service
 from app.services.supabase_client import supabase_client
+from app.services.location_service import location_service
 
 router = APIRouter()
 
@@ -485,4 +486,194 @@ async def analyze_image_with_ai(
         raise HTTPException(
             status_code=500, 
             detail=f"Unexpected error during image analysis: {str(e)}"
+        )
+
+# Location Services Endpoints
+
+@router.post("/location/geocode", response_model=dict)
+async def geocode_address(address: str = Form(...)):
+    """
+    Convert address to coordinates (e.g., "Colombo Main Street" -> lat/lng)
+    """
+    try:
+        location_data = await location_service.geocode_address(address)
+        
+        if location_data:
+            return {
+                "success": True,
+                "message": "Address geocoded successfully",
+                "location": location_data
+            }
+        else:
+            # Try to get suggestions for failed geocoding
+            suggestions = await location_service.get_location_suggestions(address, 3)
+            return {
+                "success": False,
+                "message": "Could not find exact location",
+                "suggestions": suggestions
+            }
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Geocoding failed: {str(e)}")
+
+@router.post("/location/reverse-geocode", response_model=dict)
+async def reverse_geocode_coordinates(
+    latitude: float = Form(...),
+    longitude: float = Form(...)
+):
+    """
+    Convert coordinates to address (lat/lng -> "Colombo Main Street")
+    """
+    try:
+        address_data = await location_service.reverse_geocode(latitude, longitude)
+        
+        if address_data:
+            return {
+                "success": True,
+                "message": "Coordinates converted to address",
+                "address": address_data
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Could not determine address for these coordinates"
+            }
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Reverse geocoding failed: {str(e)}")
+
+@router.get("/location/suggestions", response_model=dict)
+async def get_location_suggestions(q: str, limit: int = 5):
+    """
+    Get location suggestions for autocomplete
+    """
+    try:
+        suggestions = await location_service.get_location_suggestions(q, limit)
+        
+        return {
+            "success": True,
+            "message": f"Found {len(suggestions)} location suggestions",
+            "suggestions": suggestions
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get suggestions: {str(e)}")
+
+@router.post("/location/validate", response_model=dict)
+async def validate_location(address: str = Form(...)):
+    """
+    Validate if location exists and is within Sri Lanka
+    """
+    try:
+        validation_result = await location_service.validate_sri_lankan_location(address)
+        
+        return {
+            "success": True,
+            "message": "Location validation completed",
+            "validation": validation_result
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Location validation failed: {str(e)}")
+
+@router.get("/location/districts", response_model=dict)
+async def get_sri_lankan_districts():
+    """
+    Get list of Sri Lankan districts for reference
+    """
+    try:
+        districts = location_service.get_sri_lankan_districts()
+        
+        return {
+            "success": True,
+            "message": f"Found {len(districts)} districts",
+            "districts": districts
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get districts: {str(e)}")
+
+@router.post("/analyze-image-with-location", response_model=dict)
+async def analyze_image_with_enhanced_location(
+    image: UploadFile = File(...),
+    location_address: str = Form(None),
+    latitude: float = Form(None),
+    longitude: float = Form(None)
+):
+    """
+    Enhanced AI image analysis with advanced location processing
+    """
+    try:
+        # Validate image file
+        if not image.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="Please upload a valid image file")
+        
+        if image.size > 10 * 1024 * 1024:  # 10MB limit
+            raise HTTPException(status_code=400, detail="Image file too large. Maximum size is 10MB")
+        
+        # Read image content
+        image_content = await image.read()
+        
+        # Enhanced location processing
+        location_context = None
+        location_data = None
+        
+        if location_address:
+            # Geocode the address
+            location_data = await location_service.geocode_address(location_address)
+            if location_data:
+                location_context = f"{location_data['formatted_address']} (GPS: {location_data['latitude']:.6f}, {location_data['longitude']:.6f})"
+            else:
+                location_context = location_address
+        elif latitude and longitude:
+            # Reverse geocode the coordinates
+            address_data = await location_service.reverse_geocode(latitude, longitude)
+            if address_data:
+                location_context = f"{address_data['formatted_address']} (GPS: {latitude:.6f}, {longitude:.6f})"
+            else:
+                location_context = f"GPS Coordinates: {latitude:.6f}, {longitude:.6f}"
+        
+        # Perform AI analysis with enhanced location context
+        try:
+            analysis_result = await gemini_service.analyze_image(
+                image_content=image_content,
+                location=location_context
+            )
+            
+            # Add location data to the response
+            if location_data:
+                analysis_result["location_data"] = location_data
+            
+            return {
+                "success": True,
+                "message": "AI analysis with enhanced location completed successfully",
+                "analysis": analysis_result,
+                "location_info": {
+                    "provided_address": location_address,
+                    "coordinates": {"latitude": latitude, "longitude": longitude} if latitude and longitude else None,
+                    "geocoded_data": location_data,
+                    "context_used": location_context
+                },
+                "processing_info": {
+                    "model": "Google Gemini 1.5 Flash",
+                    "image_size": f"{len(image_content)} bytes",
+                    "location_enhanced": location_context is not None
+                }
+            }
+            
+        except ValueError as ve:
+            raise HTTPException(status_code=400, detail=str(ve))
+        
+        except Exception as ai_error:
+            raise HTTPException(
+                status_code=500, 
+                detail=f"AI analysis service error: {str(ai_error)}"
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Unexpected error during enhanced image analysis: {str(e)}"
         )
