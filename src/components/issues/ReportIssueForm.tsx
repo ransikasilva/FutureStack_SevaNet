@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useAuthContext } from '@/components/auth/AuthProvider'
 import { Upload, AlertTriangle, MapPin, Camera, Send, CheckCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { getApiUrl } from '../../lib/api'
 
 interface IssueCategory {
   name: string
@@ -152,7 +153,7 @@ export function ReportIssueForm({ preFilledData, selectedImage: initialImage, ai
       }
 
       // Call backend API
-      const response = await fetch('http://localhost:8000/api/v1/issues/report', {
+      const response = await fetch(getApiUrl('issues/report'), {
         method: 'POST',
         body: submitData
       })

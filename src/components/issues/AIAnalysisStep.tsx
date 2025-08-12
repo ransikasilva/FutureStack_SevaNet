@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { Camera, Upload, MapPin, Zap, Clock, AlertTriangle, CheckCircle, SkipForward, Loader } from 'lucide-react'
 import { LocationMap } from '../map/LocationMap'
+import { getApiUrl } from '../../lib/api'
 
 interface AIAnalysis {
   detected_issue: string
@@ -32,6 +33,11 @@ export function AIAnalysisStep({ onAnalysisComplete, onSkip }: AIAnalysisStepPro
   const [location, setLocation] = useState<{ latitude: number; longitude: number; address?: string } | null>(null)
   const [loadingLocation, setLoadingLocation] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showManualLocation, setShowManualLocation] = useState(false)
+  const [manualLocation, setManualLocation] = useState('')
+  const [isMobile] = useState(() => 
+    typeof window !== 'undefined' && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  )
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,8 +68,18 @@ export function AIAnalysisStep({ onAnalysisComplete, onSkip }: AIAnalysisStepPro
     setLoadingLocation(true)
     setError(null)
 
+    // Check if geolocation is supported
     if (!navigator.geolocation) {
-      setError('Geolocation is not supported by this browser')
+      setError('Geolocation is not supported by this browser. Please enter your location manually.')
+      setLoadingLocation(false)
+      return
+    }
+
+    // Check if we're on HTTPS or localhost (required for mobile geolocation)
+    const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost'
+    if (!isSecure && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      setError('Location access requires HTTPS on mobile. Use "Enter manually" below.')
+      setShowManualLocation(true) // Automatically show manual input
       setLoadingLocation(false)
       return
     }
@@ -78,7 +94,7 @@ export function AIAnalysisStep({ onAnalysisComplete, onSkip }: AIAnalysisStepPro
           formData.append('latitude', latitude.toString())
           formData.append('longitude', longitude.toString())
           
-          const geocodeResponse = await fetch('http://localhost:8000/api/v1/issues/location/reverse-geocode', {
+          const geocodeResponse = await fetch(getApiUrl('issues/location/reverse-geocode'), {
             method: 'POST',
             body: formData
           })
@@ -131,15 +147,75 @@ export function AIAnalysisStep({ onAnalysisComplete, onSkip }: AIAnalysisStepPro
       },
       (error) => {
         console.error('Location error:', error)
-        setError('Unable to get your location. Please enable location services.')
+        let errorMessage = 'Unable to get your location. '
+        
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage += 'Location access was denied. Please enable location permissions in your browser settings.'
+            break
+          case error.POSITION_UNAVAILABLE:
+            errorMessage += 'Location information is unavailable. Please check your GPS or network connection.'
+            break
+          case error.TIMEOUT:
+            errorMessage += 'Location request timed out. Please try again or enter location manually.'
+            break
+          default:
+            errorMessage += 'Please enable location services or enter your location manually.'
+            break
+        }
+        
+        setError(errorMessage)
         setLoadingLocation(false)
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 15000, // Increased timeout for mobile
         maximumAge: 300000
       }
     )
+  }
+
+  const handleManualLocation = async () => {
+    if (!manualLocation.trim()) {
+      setError('Please enter a location')
+      return
+    }
+
+    setLoadingLocation(true)
+    setError(null)
+
+    try {
+      // Use geocoding to convert address to coordinates
+      const formData = new FormData()
+      formData.append('address', manualLocation.trim())
+      
+      const geocodeResponse = await fetch(getApiUrl('issues/location/geocode'), {
+        method: 'POST',
+        body: formData
+      })
+      
+      if (geocodeResponse.ok) {
+        const geocodeResult = await geocodeResponse.json()
+        if (geocodeResult.success && geocodeResult.coordinates) {
+          setLocation({
+            latitude: geocodeResult.coordinates.latitude,
+            longitude: geocodeResult.coordinates.longitude,
+            address: manualLocation.trim()
+          })
+          setShowManualLocation(false)
+          setManualLocation('')
+        } else {
+          setError('Location not found. Please try a different address.')
+        }
+      } else {
+        setError('Failed to find location. Please try again.')
+      }
+    } catch (err) {
+      console.error('Manual location error:', err)
+      setError('Failed to process location. Please try again.')
+    } finally {
+      setLoadingLocation(false)
+    }
   }
 
   const analyzeImage = async () => {
@@ -165,7 +241,7 @@ export function AIAnalysisStep({ onAnalysisComplete, onSkip }: AIAnalysisStepPro
       }
 
       // Call enhanced AI analysis endpoint with location processing
-      const response = await fetch('http://localhost:8000/api/v1/issues/analyze-image-with-location', {
+      const response = await fetch(getApiUrl('issues/analyze-image-with-location'), {
         method: 'POST',
         body: formData
       })
@@ -212,45 +288,111 @@ export function AIAnalysisStep({ onAnalysisComplete, onSkip }: AIAnalysisStepPro
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6 px-1 sm:px-0">
       {/* Header */}
-      <div className="text-center">
-        <div className="mx-auto flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 mb-4">
-          <Zap className="h-6 w-6 text-blue-600" />
+      <div className="text-center px-2">
+        <div className="mx-auto flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-100 mb-3 sm:mb-4">
+          <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">AI-Powered Issue Detection</h2>
-        <p className="text-gray-600">
-          Upload a photo and let our AI identify the issue and suggest the right authority to contact
+        <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 leading-tight px-1">
+          AI Analysis
+        </h2>
+        <p className="text-xs sm:text-sm md:text-base text-gray-600 px-2 leading-relaxed max-w-md mx-auto">
+          Upload photo for AI detection
         </p>
       </div>
 
       {/* Location Section */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
           <div className="flex items-center">
             <MapPin className="h-5 w-5 text-blue-600 mr-2" />
             <span className="text-sm font-medium text-blue-800">
-              {location ? 'Location detected' : 'Get current location'}
+              {location ? 'Location detected' : 'Set your location'}
             </span>
           </div>
-          <button
-            onClick={getCurrentLocation}
-            disabled={loadingLocation}
-            className="inline-flex items-center px-3 py-1 border border-blue-300 rounded-md text-xs font-medium text-blue-700 bg-white hover:bg-blue-50 disabled:opacity-50"
-          >
-            {loadingLocation ? (
-              <>
-                <Loader className="h-3 w-3 mr-1 animate-spin" />
-                Getting location...
-              </>
-            ) : (
-              <>
-                <MapPin className="h-3 w-3 mr-1" />
-                {location ? 'Update location' : 'Get location'}
-              </>
-            )}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button
+              onClick={() => setShowManualLocation(!showManualLocation)}
+              className="inline-flex items-center justify-center px-3 py-2 border border-blue-300 rounded-md text-xs font-medium text-blue-700 bg-blue-600 text-white hover:bg-blue-700"
+            >
+              📍 Enter Location
+            </button>
+            <button
+              onClick={getCurrentLocation}
+              disabled={loadingLocation}
+              className="inline-flex items-center justify-center px-3 py-2 border border-blue-300 rounded-md text-xs font-medium text-blue-700 bg-white hover:bg-blue-50 disabled:opacity-50"
+            >
+              {loadingLocation ? (
+                <>
+                  <Loader className="h-3 w-3 mr-1 animate-spin" />
+                  Getting location...
+                </>
+              ) : (
+                <>
+                  <MapPin className="h-3 w-3 mr-1" />
+                  Auto-detect
+                </>
+              )}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile guidance */}
+        {isMobile && !location && (
+          <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <MapPin className="h-4 w-4 text-yellow-600 mt-0.5" />
+              </div>
+              <div className="ml-2">
+                <p className="text-sm text-yellow-800">
+                  <strong>Mobile tip:</strong> Use "Enter Location" button above for easy location input.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Manual Location Input */}
+        {showManualLocation && (
+          <div className="mb-3 p-3 bg-white rounded-lg border border-blue-200">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Enter your location in Sri Lanka
+            </label>
+            <p className="text-xs text-gray-500 mb-2">
+              Examples: "Colombo Fort", "Kandy Central", "Galle Road", "Negombo Beach"
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                value={manualLocation}
+                onChange={(e) => setManualLocation(e.target.value)}
+                placeholder="Enter address or landmark..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                onKeyPress={(e) => e.key === 'Enter' && handleManualLocation()}
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleManualLocation}
+                  disabled={loadingLocation || !manualLocation.trim()}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loadingLocation ? 'Searching...' : 'Find'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowManualLocation(false)
+                    setManualLocation('')
+                  }}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         
         {location && (
           <div className="space-y-3">
@@ -282,18 +424,18 @@ export function AIAnalysisStep({ onAnalysisComplete, onSkip }: AIAnalysisStepPro
       </div>
 
       {/* Image Upload Section */}
-      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
+      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-8">
         {imagePreview ? (
           <div className="text-center">
             <img
               src={imagePreview}
               alt="Issue preview"
-              className="mx-auto h-48 w-auto object-contain rounded-lg shadow-md mb-4"
+              className="mx-auto h-32 sm:h-48 w-auto object-contain rounded-lg shadow-md mb-4"
             />
-            <div className="flex justify-center space-x-3">
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
               >
                 <Camera className="h-4 w-4 mr-2" />
                 Change Photo
@@ -301,7 +443,7 @@ export function AIAnalysisStep({ onAnalysisComplete, onSkip }: AIAnalysisStepPro
               <button
                 onClick={analyzeImage}
                 disabled={analyzing}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
               >
                 {analyzing ? (
                   <>
@@ -319,24 +461,24 @@ export function AIAnalysisStep({ onAnalysisComplete, onSkip }: AIAnalysisStepPro
           </div>
         ) : (
           <div className="text-center">
-            <Camera className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Upload a photo of the issue
+            <Camera className="mx-auto h-8 sm:h-12 w-8 sm:w-12 text-gray-400 mb-4" />
+            <h3 className="text-sm sm:text-base md:text-lg font-medium text-gray-900 mb-2">
+              Take or Upload Photo
             </h3>
-            <p className="text-gray-500 mb-4">
-              Our AI will analyze the image to identify the problem and suggest the right authority
+            <p className="text-xs sm:text-sm md:text-base text-gray-500 mb-4 px-2 leading-relaxed max-w-sm mx-auto">
+              AI will identify the issue and suggest authorities
             </p>
-            <div className="flex justify-center space-x-4">
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
               >
                 <Upload className="h-4 w-4 mr-2" />
                 Choose Photo
               </button>
               <button
                 onClick={onSkip}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
               >
                 <SkipForward className="h-4 w-4 mr-2" />
                 Skip AI Analysis
@@ -368,84 +510,87 @@ export function AIAnalysisStep({ onAnalysisComplete, onSkip }: AIAnalysisStepPro
 
       {/* AI Analysis Results */}
       {analysis && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-6">
           <div className="flex items-start">
             <div className="flex-shrink-0">
-              <CheckCircle className="h-6 w-6 text-green-600" />
+              <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
             </div>
-            <div className="ml-3 flex-1">
-              <h3 className="text-lg font-medium text-green-800 mb-4">
+            <div className="ml-2 sm:ml-3 flex-1">
+              <h3 className="text-base sm:text-lg font-medium text-green-800 mb-3 sm:mb-4">
                 AI Analysis Complete
               </h3>
               
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-green-700">Detected Issue:</label>
-                  <p className="text-green-800 font-semibold">{analysis.detected_issue}</p>
+                  <label className="text-xs sm:text-sm font-medium text-green-700">Detected Issue:</label>
+                  <p className="text-sm sm:text-base text-green-800 font-semibold break-words">{analysis.detected_issue}</p>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-green-700">Category:</label>
-                  <p className="text-green-800 capitalize">{analysis.category}</p>
+                  <label className="text-xs sm:text-sm font-medium text-green-700">Category:</label>
+                  <p className="text-sm sm:text-base text-green-800 capitalize">{analysis.category}</p>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-green-700">Description:</label>
-                  <p className="text-green-800">{analysis.description}</p>
+                  <label className="text-xs sm:text-sm font-medium text-green-700">Description:</label>
+                  <p className="text-sm sm:text-base text-green-800 break-words">{analysis.description}</p>
                 </div>
 
-                <div className="flex items-center space-x-4">
-                  <div>
-                    <label className="text-sm font-medium text-green-700">Severity:</label>
-                    <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(analysis.severity_level)}`}>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                  <div className="flex items-center">
+                    <label className="text-xs sm:text-sm font-medium text-green-700">Severity:</label>
+                    <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(analysis.severity_level)}`}>
                       {getSeverityLabel(analysis.severity_level)}
                     </span>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-green-700">Confidence:</label>
-                    <span className="ml-2 text-green-800 font-medium">
+                  <div className="flex items-center">
+                    <label className="text-xs sm:text-sm font-medium text-green-700">Confidence:</label>
+                    <span className="ml-2 text-sm sm:text-base text-green-800 font-medium">
                       {Math.round(analysis.confidence_score * 100)}%
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-white border border-green-200 rounded-lg p-4">
+                <div className="bg-white border border-green-200 rounded-lg p-3 sm:p-4">
                   <h4 className="text-sm font-medium text-green-700 mb-2">Recommended Authority:</h4>
                   <div className="space-y-2">
-                    <p className="font-semibold text-gray-900">{analysis.recommended_authority.name}</p>
-                    <div className="flex flex-col sm:flex-row sm:space-x-6 space-y-1 sm:space-y-0 text-sm">
+                    <p className="font-semibold text-gray-900 text-sm sm:text-base">{analysis.recommended_authority.name}</p>
+                    <div className="flex flex-col space-y-1 text-xs sm:text-sm">
                       <div className="flex items-center">
-                        <span className="text-gray-500">Phone:</span>
+                        <span className="text-gray-500 min-w-[70px]">Phone:</span>
                         <span className="ml-1 text-gray-900 font-medium">{analysis.recommended_authority.contact_phone}</span>
                       </div>
                       <div className="flex items-center">
-                        <span className="text-gray-500">Emergency:</span>
+                        <span className="text-gray-500 min-w-[70px]">Emergency:</span>
                         <span className="ml-1 text-red-600 font-medium">{analysis.recommended_authority.emergency_contact}</span>
                       </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[70px]">Email:</span>
+                        <span className="ml-1 text-gray-600 break-all">{analysis.recommended_authority.contact_email}</span>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600">{analysis.recommended_authority.contact_email}</p>
                   </div>
                 </div>
 
                 {analysis.suggested_location && (
                   <div>
-                    <label className="text-sm font-medium text-green-700">Suggested Location:</label>
-                    <p className="text-green-800">{analysis.suggested_location}</p>
+                    <label className="text-xs sm:text-sm font-medium text-green-700">Suggested Location:</label>
+                    <p className="text-sm sm:text-base text-green-800 break-words">{analysis.suggested_location}</p>
                   </div>
                 )}
               </div>
 
-              <div className="mt-6 flex space-x-3">
+              <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={handleProceedWithAnalysis}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+                  className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Proceed with Analysis
                 </button>
                 <button
                   onClick={onSkip}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                 >
                   <SkipForward className="h-4 w-4 mr-2" />
                   Manual Entry Instead
@@ -457,9 +602,9 @@ export function AIAnalysisStep({ onAnalysisComplete, onSkip }: AIAnalysisStepPro
       )}
 
       {/* Help Text */}
-      <div className="text-center">
-        <p className="text-xs text-gray-500">
-          💡 Tip: Take a clear photo showing the issue for best AI analysis results
+      <div className="text-center px-2">
+        <p className="text-xs sm:text-sm text-gray-500 leading-relaxed max-w-xs mx-auto">
+          💡 Take a clear photo for best results
         </p>
       </div>
     </div>

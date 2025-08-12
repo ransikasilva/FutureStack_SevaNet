@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Clock, CheckCircle, AlertCircle, FileText, MapPin, Calendar, Phone, Mail } from 'lucide-react'
 import { format } from 'date-fns'
+import { getApiUrl } from '../../lib/api'
 
 interface Issue {
   id: string
@@ -64,7 +65,7 @@ export function MyReports({ userId }: MyReportsProps) {
     if (!userId) return
     
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/issues/my-reports/${userId}`)
+      const response = await fetch(getApiUrl(`issues/my-reports/${userId}`))
       
       if (!response.ok) {
         throw new Error('Failed to fetch reports')
