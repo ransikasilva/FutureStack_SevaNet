@@ -41,183 +41,168 @@ function DashboardContent() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-lg shadow-sm">
-        <div className="px-6 py-8 text-white">
-          <h1 className="text-2xl font-bold mb-2">
-            Welcome back, {user?.profile?.full_name || 'User'}!
-          </h1>
-          <p className="text-primary-100">
-            Manage your government service appointments efficiently
-          </p>
-        </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Calendar className="h-6 w-6 text-gray-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Total Appointments
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.total}
-                  </dd>
-                </dl>
-              </div>
-            </div>
+    <div className="space-y-8">
+      {/* Header Section */}
+      <div className="bg-white border-b border-gray-200 pb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Welcome back, {user?.profile?.full_name?.split(' ')[0] || 'User'}
+            </h1>
+            <p className="text-lg text-gray-600 mt-2">
+              Manage your government services and appointments in one place
+            </p>
           </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Clock className="h-6 w-6 text-yellow-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Pending
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.pending}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <CheckCircle className="h-6 w-6 text-green-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Confirmed
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.confirmed}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <FileText className="h-6 w-6 text-blue-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Completed
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.completed}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Quick Actions</h2>
-        </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex items-center space-x-4">
             <Link
               href="/dashboard/book"
-              className="relative group bg-white p-6 rounded-lg border-2 border-dashed border-gray-300 hover:border-primary-400 transition-colors"
+              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-government-dark-blue hover:bg-blue-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-government-dark-blue"
             >
-              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-primary-100 rounded-lg group-hover:bg-primary-200 transition-colors">
-                <Plus className="h-6 w-6 text-primary-600" />
-              </div>
-              <h3 className="mt-4 text-sm font-medium text-gray-900 text-center">
-                Book New Appointment
-              </h3>
-              <p className="mt-2 text-sm text-gray-500 text-center">
-                Schedule your next government service
-              </p>
-            </Link>
-
-            <Link
-              href="/dashboard/appointments"
-              className="relative group bg-white p-6 rounded-lg border-2 border-dashed border-gray-300 hover:border-primary-400 transition-colors"
-            >
-              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
-                <Calendar className="h-6 w-6 text-green-600" />
-              </div>
-              <h3 className="mt-4 text-sm font-medium text-gray-900 text-center">
-                View All Appointments
-              </h3>
-              <p className="mt-2 text-sm text-gray-500 text-center">
-                Manage your scheduled appointments
-              </p>
-            </Link>
-
-            <Link
-              href="/dashboard/documents"
-              className="relative group bg-white p-6 rounded-lg border-2 border-dashed border-gray-300 hover:border-primary-400 transition-colors"
-            >
-              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                <FileText className="h-6 w-6 text-blue-600" />
-              </div>
-              <h3 className="mt-4 text-sm font-medium text-gray-900 text-center">
-                Manage Documents
-              </h3>
-              <p className="mt-2 text-sm text-gray-500 text-center">
-                Upload and organize documents
-              </p>
+              <Plus className="mr-2 h-5 w-5" />
+              Book Appointment
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Upcoming Appointments */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-lg font-medium text-gray-900">Upcoming Appointments</h2>
-          <Link
-            href="/dashboard/appointments"
-            className="text-sm text-primary-600 hover:text-primary-500"
-          >
-            View all
-          </Link>
+      {/* Statistics Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center">
+            <div className="p-3 bg-blue-100 rounded-xl">
+              <Calendar className="h-6 w-6 text-blue-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Total Appointments</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+            </div>
+          </div>
         </div>
-        <div className="p-6">
+
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center">
+            <div className="p-3 bg-yellow-100 rounded-xl">
+              <Clock className="h-6 w-6 text-yellow-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Pending</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center">
+            <div className="p-3 bg-green-100 rounded-xl">
+              <CheckCircle className="h-6 w-6 text-green-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Confirmed</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.confirmed}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center">
+            <div className="p-3 bg-purple-100 rounded-xl">
+              <FileText className="h-6 w-6 text-purple-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Completed</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.completed}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Link
+          href="/dashboard/book"
+          className="group bg-white border border-gray-200 rounded-xl p-8 hover:border-government-dark-blue hover:shadow-lg transition-all duration-300"
+        >
+          <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-xl group-hover:bg-blue-200 transition-colors mb-6">
+            <Plus className="h-8 w-8 text-blue-600" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-government-dark-blue transition-colors">
+            Book New Appointment
+          </h3>
+          <p className="text-gray-600 leading-relaxed">
+            Schedule appointments for various government services including passport, license, and certificate applications.
+          </p>
+        </Link>
+
+        <Link
+          href="/dashboard/appointments"
+          className="group bg-white border border-gray-200 rounded-xl p-8 hover:border-government-dark-blue hover:shadow-lg transition-all duration-300"
+        >
+          <div className="flex items-center justify-center w-16 h-16 bg-green-100 rounded-xl group-hover:bg-green-200 transition-colors mb-6">
+            <Calendar className="h-8 w-8 text-green-600" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-government-dark-blue transition-colors">
+            My Appointments
+          </h3>
+          <p className="text-gray-600 leading-relaxed">
+            View and manage all your scheduled appointments. Track status, reschedule, or cancel existing bookings.
+          </p>
+        </Link>
+
+        <Link
+          href="/dashboard/documents"
+          className="group bg-white border border-gray-200 rounded-xl p-8 hover:border-government-dark-blue hover:shadow-lg transition-all duration-300"
+        >
+          <div className="flex items-center justify-center w-16 h-16 bg-purple-100 rounded-xl group-hover:bg-purple-200 transition-colors mb-6">
+            <FileText className="h-8 w-8 text-purple-600" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-government-dark-blue transition-colors">
+            Document Wallet
+          </h3>
+          <p className="text-gray-600 leading-relaxed">
+            Securely store and manage your documents. Upload required files for faster appointment processing.
+          </p>
+        </Link>
+      </div>
+
+      {/* Upcoming Appointments Section */}
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+        <div className="px-8 py-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Upcoming Appointments</h2>
+              <p className="text-gray-600 mt-1">Your next scheduled government services</p>
+            </div>
+            <Link
+              href="/dashboard/appointments"
+              className="inline-flex items-center text-government-dark-blue hover:text-blue-800 font-medium"
+            >
+              View all appointments
+              <AlertCircle className="ml-2 h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+        
+        <div className="p-8">
           {loading ? (
-            <div className="text-center py-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-              <p className="mt-2 text-gray-500">Loading appointments...</p>
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-government-dark-blue mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading your appointments...</p>
             </div>
           ) : upcomingAppointments.length === 0 ? (
-            <div className="text-center py-8">
-              <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No upcoming appointments</p>
+            <div className="text-center py-16">
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Calendar className="h-12 w-12 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No upcoming appointments</h3>
+              <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                You don't have any scheduled appointments. Book your first appointment to get started with government services.
+              </p>
               <Link
                 href="/dashboard/book"
-                className="mt-2 inline-flex items-center text-sm text-primary-600 hover:text-primary-500"
+                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-government-dark-blue hover:bg-blue-800 transition-colors"
               >
-                Book your first appointment
+                <Plus className="mr-2 h-5 w-5" />
+                Book Your First Appointment
               </Link>
             </div>
           ) : (
@@ -225,35 +210,51 @@ function DashboardContent() {
               {upcomingAppointments.map((appointment) => (
                 <div
                   key={appointment.id}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                  className="flex items-center justify-between p-6 border border-gray-200 rounded-xl hover:border-government-dark-blue hover:shadow-md transition-all duration-300"
                 >
-                  <div className="flex items-center space-x-4">
-                    <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-                        <Calendar className="h-5 w-5 text-primary-600" />
-                      </div>
+                  <div className="flex items-center space-x-6">
+                    <div className="p-3 bg-blue-100 rounded-xl">
+                      <Calendar className="h-6 w-6 text-blue-600" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-900">
+                      <h4 className="text-lg font-semibold text-gray-900">
                         {appointment.service?.name}
-                      </h3>
-                      <p className="text-sm text-gray-500">
+                      </h4>
+                      <p className="text-gray-600 mt-1">
                         {appointment.time_slot && 
-                          format(new Date(appointment.time_slot.start_time), 'MMM d, yyyy at h:mm a')
+                          format(new Date(appointment.time_slot.start_time), 'EEEE, MMMM d, yyyy at h:mm a')
                         }
                       </p>
-                      <p className="text-xs text-gray-400">
-                        Ref: {appointment.booking_reference}
+                      <p className="text-sm text-gray-500 mt-1">
+                        Reference: {appointment.booking_reference}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(appointment.status)}`}>
-                      {appointment.status}
+                  <div className="flex items-center space-x-4">
+                    <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${getStatusColor(appointment.status)}`}>
+                      {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
                     </span>
+                    <Link
+                      href={`/dashboard/appointments`}
+                      className="text-government-dark-blue hover:text-blue-800 font-medium"
+                    >
+                      View Details →
+                    </Link>
                   </div>
                 </div>
               ))}
+              
+              {upcomingAppointments.length > 0 && (
+                <div className="pt-6 text-center border-t border-gray-200">
+                  <Link
+                    href="/dashboard/appointments"
+                    className="inline-flex items-center text-government-dark-blue hover:text-blue-800 font-medium"
+                  >
+                    View all {appointments.length} appointments
+                    <AlertCircle className="ml-2 h-4 w-4" />
+                  </Link>
+                </div>
+              )}
             </div>
           )}
         </div>

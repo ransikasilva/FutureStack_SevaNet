@@ -2,7 +2,6 @@
 
 import { useAuthContext } from '@/components/auth/AuthProvider'
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
-import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { useOfficerAppointments, useDepartmentStats, useTodaysSchedule } from '@/hooks/useOfficerData'
 import { 
   Calendar, 
@@ -20,11 +19,14 @@ import Link from 'next/link'
 function OfficerDashboardContent() {
   const { user } = useAuthContext()
   const departmentId = user?.profile?.department_id || ''
-  const officerId = user?.profile?.id || ''
+
+  console.log('Officer Dashboard - User:', user)
+  console.log('Officer Dashboard - User Role:', user?.profile?.role)
+  console.log('Officer Dashboard - Department ID:', departmentId)
 
   const { appointments, loading: appointmentsLoading } = useOfficerAppointments(departmentId)
   const { stats, loading: statsLoading } = useDepartmentStats(departmentId)
-  const { schedule, loading: scheduleLoading } = useTodaysSchedule(officerId)
+  const { schedule, loading: scheduleLoading } = useTodaysSchedule(departmentId)
 
   const todaysAppointments = schedule.length
   const pendingReviews = appointments.filter(apt => 
@@ -53,150 +55,189 @@ function OfficerDashboardContent() {
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg shadow-sm">
-        <div className="px-6 py-8 text-white">
-          <h1 className="text-2xl font-bold mb-2">
-            Welcome, Officer {user?.profile?.full_name || 'User'}!
-          </h1>
-          <p className="text-blue-100">
-            Manage appointments and review documents for your department
-          </p>
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 rounded-3xl"></div>
+        <div className="absolute inset-0 bg-gradient-to-tr from-government-gold/20 via-transparent to-primary-500/30 rounded-3xl"></div>
+        <div className="relative px-8 py-10 text-white rounded-3xl shadow-premium border border-primary-500/20">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-3 bg-gradient-to-r from-white to-primary-100 bg-clip-text text-transparent">
+                Welcome back, Officer {user?.profile?.full_name?.split(' ')[0] || 'User'}! 👋
+              </h1>
+              <p className="text-primary-100 text-lg font-medium">
+                Managing Immigration & Emigration Department • {new Date().toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </p>
+            </div>
+            <div className="hidden md:block">
+              <div className="w-24 h-24 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20">
+                <div className="text-4xl">🏛️</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Calendar className="h-6 w-6 text-blue-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Today's Appointments
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {scheduleLoading ? '...' : todaysAppointments}
-                  </dd>
-                </dl>
-              </div>
+        <div className="card-elevated group hover:scale-105 transition-all duration-300">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-secondary-600 uppercase tracking-wide">
+                Today's Appointments
+              </p>
+              <p className="text-3xl font-bold text-secondary-900 mt-2">
+                {scheduleLoading ? (
+                  <div className="skeleton h-8 w-16"></div>
+                ) : (
+                  <span className="bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent">
+                    {todaysAppointments}
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="p-3 bg-gradient-to-br from-primary-100 to-primary-200 rounded-xl group-hover:from-primary-200 group-hover:to-primary-300 transition-colors">
+              <Calendar className="h-6 w-6 text-primary-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <FileText className="h-6 w-6 text-yellow-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Pending Reviews
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {appointmentsLoading ? '...' : pendingReviews}
-                  </dd>
-                </dl>
-              </div>
+        <div className="card-elevated group hover:scale-105 transition-all duration-300">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-secondary-600 uppercase tracking-wide">
+                Pending Reviews
+              </p>
+              <p className="text-3xl font-bold text-secondary-900 mt-2">
+                {appointmentsLoading ? (
+                  <div className="skeleton h-8 w-16"></div>
+                ) : (
+                  <span className="bg-gradient-to-r from-warning-600 to-warning-700 bg-clip-text text-transparent">
+                    {pendingReviews}
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="p-3 bg-gradient-to-br from-warning-100 to-warning-200 rounded-xl group-hover:from-warning-200 group-hover:to-warning-300 transition-colors">
+              <FileText className="h-6 w-6 text-warning-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <CheckCircle className="h-6 w-6 text-green-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Confirmed Today
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {statsLoading ? '...' : stats.confirmed_appointments}
-                  </dd>
-                </dl>
-              </div>
+        <div className="card-elevated group hover:scale-105 transition-all duration-300">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-secondary-600 uppercase tracking-wide">
+                Confirmed Today
+              </p>
+              <p className="text-3xl font-bold text-secondary-900 mt-2">
+                {statsLoading ? (
+                  <div className="skeleton h-8 w-16"></div>
+                ) : (
+                  <span className="bg-gradient-to-r from-success-600 to-success-700 bg-clip-text text-transparent">
+                    {stats.confirmed_appointments}
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="p-3 bg-gradient-to-br from-success-100 to-success-200 rounded-xl group-hover:from-success-200 group-hover:to-success-300 transition-colors">
+              <CheckCircle className="h-6 w-6 text-success-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <TrendingUp className="h-6 w-6 text-purple-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Total This Month
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {statsLoading ? '...' : stats.total_appointments}
-                  </dd>
-                </dl>
-              </div>
+        <div className="card-elevated group hover:scale-105 transition-all duration-300">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-secondary-600 uppercase tracking-wide">
+                Total This Month
+              </p>
+              <p className="text-3xl font-bold text-secondary-900 mt-2">
+                {statsLoading ? (
+                  <div className="skeleton h-8 w-16"></div>
+                ) : (
+                  <span className="bg-gradient-to-r from-government-gold to-yellow-600 bg-clip-text text-transparent">
+                    {stats.total_appointments}
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="p-3 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-xl group-hover:from-yellow-200 group-hover:to-yellow-300 transition-colors">
+              <TrendingUp className="h-6 w-6 text-yellow-600" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Quick Actions</h2>
+      <div className="card-elevated">
+        <div className="px-8 py-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">Quick Actions</h2>
+          <p className="text-sm text-gray-600 mt-1">Access frequently used functions</p>
         </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="p-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <Link
               href="/officer/appointments"
-              className="relative group bg-white p-6 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors"
+              className="group relative bg-white p-6 rounded-xl border border-gray-200 hover:border-primary-300 hover:shadow-lg transition-all duration-200 hover:-translate-y-1"
             >
-              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                <Calendar className="h-6 w-6 text-blue-600" />
+              <div className="flex items-center justify-center w-14 h-14 mx-auto bg-primary-50 rounded-xl group-hover:bg-primary-100 transition-colors">
+                <Calendar className="h-7 w-7 text-primary-600" />
               </div>
-              <h3 className="mt-4 text-sm font-medium text-gray-900 text-center">
-                Manage Appointments
+              <h3 className="mt-4 text-lg font-semibold text-gray-900 text-center">
+                Appointments
               </h3>
-              <p className="mt-2 text-sm text-gray-500 text-center">
-                Review and update appointment status
+              <p className="mt-2 text-sm text-gray-600 text-center">
+                Review and manage scheduled appointments
               </p>
+              <div className="mt-4 flex justify-center">
+                <span className="text-xs font-medium text-primary-600 bg-primary-50 px-2 py-1 rounded-full">
+                  {appointmentsLoading ? '...' : appointments.length} pending
+                </span>
+              </div>
             </Link>
 
             <Link
               href="/officer/documents"
-              className="relative group bg-white p-6 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors"
+              className="group relative bg-white p-6 rounded-xl border border-gray-200 hover:border-warning-300 hover:shadow-lg transition-all duration-200 hover:-translate-y-1"
             >
-              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-yellow-100 rounded-lg group-hover:bg-yellow-200 transition-colors">
-                <FileText className="h-6 w-6 text-yellow-600" />
+              <div className="flex items-center justify-center w-14 h-14 mx-auto bg-warning-50 rounded-xl group-hover:bg-warning-100 transition-colors">
+                <FileText className="h-7 w-7 text-warning-600" />
               </div>
-              <h3 className="mt-4 text-sm font-medium text-gray-900 text-center">
-                Review Documents
+              <h3 className="mt-4 text-lg font-semibold text-gray-900 text-center">
+                Documents
               </h3>
-              <p className="mt-2 text-sm text-gray-500 text-center">
-                Approve or reject submitted documents
+              <p className="mt-2 text-sm text-gray-600 text-center">
+                Review and approve submitted documents
               </p>
+              <div className="mt-4 flex justify-center">
+                <span className="text-xs font-medium text-warning-600 bg-warning-50 px-2 py-1 rounded-full">
+                  {pendingReviews} reviews needed
+                </span>
+              </div>
             </Link>
 
             <Link
               href="/officer/schedule"
-              className="relative group bg-white p-6 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors"
+              className="group relative bg-white p-6 rounded-xl border border-gray-200 hover:border-success-300 hover:shadow-lg transition-all duration-200 hover:-translate-y-1"
             >
-              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
-                <Clock className="h-6 w-6 text-green-600" />
+              <div className="flex items-center justify-center w-14 h-14 mx-auto bg-success-50 rounded-xl group-hover:bg-success-100 transition-colors">
+                <Clock className="h-7 w-7 text-success-600" />
               </div>
-              <h3 className="mt-4 text-sm font-medium text-gray-900 text-center">
-                View Schedule
+              <h3 className="mt-4 text-lg font-semibold text-gray-900 text-center">
+                Schedule
               </h3>
-              <p className="mt-2 text-sm text-gray-500 text-center">
-                Check your daily appointment schedule
+              <p className="mt-2 text-sm text-gray-600 text-center">
+                View your daily appointment calendar
               </p>
+              <div className="mt-4 flex justify-center">
+                <span className="text-xs font-medium text-success-600 bg-success-50 px-2 py-1 rounded-full">
+                  {todaysAppointments} today
+                </span>
+              </div>
             </Link>
           </div>
         </div>
@@ -204,41 +245,42 @@ function OfficerDashboardContent() {
 
       {/* Next Appointment */}
       {nextAppointment && (
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Next Appointment</h2>
+        <div className="card-elevated">
+          <div className="px-8 py-6 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900">Next Appointment</h2>
+            <p className="text-sm text-gray-600 mt-1">Your upcoming appointment</p>
           </div>
-          <div className="p-6">
-            <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="p-8">
+            <div className="flex items-center justify-between p-6 bg-primary-50 border border-primary-200 rounded-xl">
               <div className="flex items-center space-x-4">
                 <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Users className="h-5 w-5 text-blue-600" />
+                  <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center">
+                    <Users className="h-6 w-6 text-primary-600" />
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900">
+                  <h3 className="text-lg font-semibold text-gray-900">
                     {nextAppointment.citizen?.full_name}
                   </h3>
                   <p className="text-sm text-gray-600">
                     {nextAppointment.service?.name}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 mt-1">
                     {nextAppointment.time_slot && 
                       format(new Date(nextAppointment.time_slot.start_time), 'h:mm a')
                     } • Ref: {nextAppointment.booking_reference}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(nextAppointment.status)}`}>
+              <div className="flex items-center space-x-3">
+                <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${getStatusColor(nextAppointment.status)}`}>
                   {nextAppointment.status}
                 </span>
                 <Link
                   href={`/officer/appointments/${nextAppointment.id}`}
-                  className="p-2 text-blue-600 hover:text-blue-800"
+                  className="p-2 text-primary-600 hover:text-primary-800 bg-white rounded-lg shadow-sm border"
                 >
-                  <Eye className="h-4 w-4" />
+                  <Eye className="h-5 w-5" />
                 </Link>
               </div>
             </div>
@@ -247,73 +289,78 @@ function OfficerDashboardContent() {
       )}
 
       {/* Today's Schedule Overview */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-lg font-medium text-gray-900">Today's Schedule</h2>
+      <div className="card-elevated">
+        <div className="px-8 py-6 border-b border-gray-200 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">Today's Schedule</h2>
+            <p className="text-sm text-gray-600 mt-1">Your appointments for today</p>
+          </div>
           <Link
             href="/officer/schedule"
-            className="text-sm text-blue-600 hover:text-blue-500"
+            className="btn-secondary text-sm"
           >
-            View full schedule
+            View Calendar
           </Link>
         </div>
-        <div className="p-6">
+        <div className="p-8">
           {scheduleLoading ? (
-            <div className="text-center py-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-gray-500">Loading schedule...</p>
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+              <p className="mt-4 text-gray-500">Loading schedule...</p>
             </div>
           ) : schedule.length === 0 ? (
-            <div className="text-center py-8">
-              <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No appointments scheduled for today</p>
+            <div className="text-center py-12">
+              <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No appointments today</h3>
+              <p className="text-gray-500">You have a clear schedule for today</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {schedule.slice(0, 5).map((appointment) => (
                 <div
                   key={appointment.id}
-                  className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                  className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className="text-sm font-medium text-gray-900">
+                  <div className="flex items-center space-x-4">
+                    <div className="text-sm font-semibold text-primary-600 bg-primary-50 px-3 py-2 rounded-lg min-w-[60px] text-center">
                       {appointment.time_slot && 
                         format(new Date(appointment.time_slot.start_time), 'HH:mm')
                       }
                     </div>
                     <div>
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-base font-semibold text-gray-900">
                         {appointment.citizen?.full_name}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-sm text-gray-600">
                         {appointment.service?.name}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(appointment.status)}`}>
+                  <div className="flex items-center space-x-3">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(appointment.status)}`}>
                       {appointment.status}
                     </span>
                     {appointment.documents?.some(doc => doc.status === 'pending') && (
-                      <AlertCircle className="h-4 w-4 text-yellow-500" title="Documents pending review" />
+                      <div className="flex items-center space-x-1 text-warning-600 bg-warning-50 px-2 py-1 rounded-full">
+                        <AlertCircle className="h-3 w-3" />
+                        <span className="text-xs font-medium">Docs</span>
+                      </div>
                     )}
                   </div>
                 </div>
               ))}
+              {schedule.length > 5 && (
+                <div className="text-center pt-4">
+                  <Link
+                    href="/officer/schedule"
+                    className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                  >
+                    View {schedule.length - 5} more appointments →
+                  </Link>
+                </div>
+              )}
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Recent Activity */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Recent Activity</h2>
-        </div>
-        <div className="p-6">
-          <div className="text-center py-8 text-gray-500">
-            Activity feed coming soon...
-          </div>
         </div>
       </div>
     </div>
@@ -323,9 +370,7 @@ function OfficerDashboardContent() {
 export default function OfficerDashboardPage() {
   return (
     <ProtectedRoute allowedRoles={['officer']}>
-      <DashboardLayout>
-        <OfficerDashboardContent />
-      </DashboardLayout>
+      <OfficerDashboardContent />
     </ProtectedRoute>
   )
 }

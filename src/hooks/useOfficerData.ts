@@ -45,43 +45,75 @@ export function useOfficerAppointments(departmentId: string, officerId?: string)
 
     const fetchAppointments = async () => {
       try {
+        console.log('Fetching appointments for department:', departmentId)
+        
+        // Use the same working pattern as the appointments page
         let query = supabase
           .from('appointments')
           .select(`
             *,
-            citizen:profiles!appointments_citizen_id_fkey(
-              id, full_name, nic, phone
-            ),
-            service:services(
-              id, name, description, duration_minutes, required_documents
-            ),
-            time_slot:time_slots(
-              id, start_time, end_time
+            services!inner(
+              id, name, description, duration_minutes, required_documents, department_id
             )
           `)
-          .eq('service.department_id', departmentId)
-          .order('time_slot.start_time', { ascending: true })
+          .eq('services.department_id', departmentId)
+          .order('created_at', { ascending: false })
 
-        if (officerId) {
-          query = query.eq('time_slot.officer_id', officerId)
-        }
+        // Remove officer filter for now to see all department appointments
+        // if (officerId) {
+        //   query = query.eq('time_slots.officer_id', officerId)
+        // }
 
         const { data, error } = await query
 
-        if (error) throw error
+        console.log('Appointments query result:', { 
+          data, 
+          error, 
+          count: data?.length,
+          departmentId,
+          queryUrl: query.toString()
+        })
 
-        // Fetch documents for each appointment
+        if (error) {
+          console.error('Query error details:', error)
+          throw error
+        }
+
+        // Enhance appointments with real citizen data and time slots
         const appointmentsWithDocs = await Promise.all(
           (data || []).map(async (appointment) => {
-            const { data: documents } = await supabase
-              .from('documents')
-              .select('*')
-              .eq('appointment_id', appointment.id)
-              .order('uploaded_at', { ascending: false })
+            // Get real citizen data
+            const { data: citizenData } = await supabase
+              .from('profiles')
+              .select('id, full_name, phone, nic')
+              .eq('id', appointment.citizen_id)
+              .single()
+
+            // Get time slot data if time_slot_id exists
+            let timeSlotData = null
+            if (appointment.time_slot_id) {
+              const { data: timeSlot } = await supabase
+                .from('time_slots')
+                .select('id, start_time, end_time')
+                .eq('id', appointment.time_slot_id)
+                .single()
+              timeSlotData = timeSlot
+            }
 
             return {
               ...appointment,
-              documents: documents || []
+              service: appointment.services,
+              citizen: citizenData || { 
+                id: appointment.citizen_id,
+                full_name: 'Unknown Citizen', 
+                phone: 'N/A',
+                nic: 'N/A'
+              },
+              time_slot: timeSlotData || { 
+                start_time: appointment.created_at,
+                end_time: appointment.created_at
+              },
+              documents: [] // Will be populated separately if needed
             }
           })
         )
@@ -202,8 +234,6 @@ export function useDepartmentStats(departmentId: string) {
 
         if (appointmentError) {
           // Fallback to manual queries if RPC doesn't exist
-          const today = new Date().toISOString().split('T')[0]
-          
           const { count: totalAppointments } = await supabase
             .from('appointments')
             .select('*', { count: 'exact', head: true })
@@ -251,42 +281,71 @@ export function useDepartmentStats(departmentId: string) {
   return { stats, loading, error }
 }
 
-export function useTodaysSchedule(officerId: string) {
+export function useTodaysSchedule(departmentId: string) {
   const [schedule, setSchedule] = useState<OfficerAppointment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!officerId) return
+    if (!departmentId) return
 
     const fetchTodaysSchedule = async () => {
       try {
-        const today = new Date()
-        const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString()
-        const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString()
+        console.log('Fetching schedule for department:', departmentId)
 
+        // Get all appointments for this department with time slots
         const { data, error } = await supabase
           .from('appointments')
           .select(`
             *,
-            citizen:profiles!appointments_citizen_id_fkey(
-              id, full_name, nic, phone
+            services!inner(
+              id, name, department_id
             ),
-            service:services(
-              id, name, description, duration_minutes
-            ),
-            time_slot:time_slots(
+            time_slots(
               id, start_time, end_time
             )
           `)
-          .eq('time_slot.officer_id', officerId)
-          .gte('time_slot.start_time', startOfDay)
-          .lte('time_slot.start_time', endOfDay)
-          .order('time_slot.start_time', { ascending: true })
+          .eq('services.department_id', departmentId)
+          .order('created_at', { ascending: false })
 
-        if (error) throw error
-        setSchedule(data || [])
+        if (error) {
+          console.error('Schedule query error:', error)
+          throw error
+        }
+
+        console.log('Schedule raw data:', data?.length)
+
+        // Enhance with citizen data
+        const scheduleWithCitizens = await Promise.all(
+          (data || []).map(async (appointment) => {
+            const { data: citizenData } = await supabase
+              .from('profiles')
+              .select('id, full_name, phone, nic')
+              .eq('id', appointment.citizen_id)
+              .single()
+
+            return {
+              ...appointment,
+              service: appointment.services,
+              citizen: citizenData || { 
+                id: appointment.citizen_id,
+                full_name: 'Unknown Citizen', 
+                phone: 'N/A',
+                nic: 'N/A'
+              },
+              time_slot: appointment.time_slots || { 
+                start_time: appointment.created_at,
+                end_time: appointment.created_at
+              },
+              documents: []
+            }
+          })
+        )
+
+        console.log('Enhanced schedule:', scheduleWithCitizens.length)
+        setSchedule(scheduleWithCitizens)
       } catch (err: any) {
+        console.error('Failed to fetch schedule:', err)
         setError(err.message)
       } finally {
         setLoading(false)
@@ -294,7 +353,7 @@ export function useTodaysSchedule(officerId: string) {
     }
 
     fetchTodaysSchedule()
-  }, [officerId])
+  }, [departmentId])
 
   return { schedule, loading, error }
 }

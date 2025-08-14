@@ -102,6 +102,19 @@ export async function uploadToWallet(data: {
     if (uploadError) throw uploadError
 
     // Save document metadata to database
+    console.log('Inserting document with data:', {
+      citizen_id: citizenId,
+      file_name: file.name,
+      file_path: uploadData.path,
+      file_type: file.type,
+      document_category: documentCategory,
+      document_type: documentType || null,
+      is_wallet_document: true,
+      wallet_category: documentCategory,
+      expiry_date: expiryDate || null,
+      status: 'pending'
+    })
+
     const { data: documentData, error: documentError } = await supabase
       .from('documents')
       .insert({
@@ -109,15 +122,18 @@ export async function uploadToWallet(data: {
         file_name: file.name,
         file_path: uploadData.path,
         file_type: file.type,
-        file_size: file.size,
         document_category: documentCategory,
-        document_type: documentType,
+        document_type: documentType || null,
         is_wallet_document: true,
+        wallet_category: documentCategory,
         expiry_date: expiryDate || null,
-        status: 'pending'
+        status: 'pending',
+        uploaded_at: new Date().toISOString()
       })
       .select()
       .single()
+
+    console.log('Database insert result:', { documentData, documentError })
 
     if (documentError) throw documentError
     return documentData

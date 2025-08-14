@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react'
 import { useAuthContext } from '@/components/auth/AuthProvider'
 import { updateProfile } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
+import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
+import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { 
   User, 
-  Phone, 
   Mail, 
-  MapPin, 
   Calendar, 
   CreditCard,
   Shield,
@@ -19,7 +19,7 @@ import {
   CheckCircle
 } from 'lucide-react'
 
-export default function ProfilePage() {
+function ProfileContent() {
   const { user } = useAuthContext()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
@@ -128,198 +128,249 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="text-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+      <div className="text-center py-16">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-government-dark-blue mx-auto"></div>
         <p className="text-gray-600 mt-4">Loading profile...</p>
       </div>
     )
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
-        <p className="text-gray-600">Manage your account information and preferences</p>
+      <div className="bg-white border-b border-gray-200 pb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Profile Settings</h1>
+            <p className="text-lg text-gray-600 mt-2">
+              Manage your account information and notification preferences
+            </p>
+          </div>
+          <div className="mt-6 sm:mt-0 flex items-center space-x-4">
+            <div className="flex items-center text-sm text-gray-500">
+              <Shield className="h-4 w-4 mr-1" />
+              <span>Secure profile</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Message */}
       {message && (
-        <div className={`p-4 rounded-md ${
+        <div className={`p-6 rounded-xl ${
           message.type === 'success' 
             ? 'bg-green-50 border border-green-200 text-green-700' 
             : 'bg-red-50 border border-red-200 text-red-700'
         }`}>
           <div className="flex items-center">
             {message.type === 'success' ? (
-              <CheckCircle className="h-5 w-5 mr-2" />
+              <CheckCircle className="h-6 w-6 mr-3" />
             ) : (
-              <AlertCircle className="h-5 w-5 mr-2" />
+              <AlertCircle className="h-6 w-6 mr-3" />
             )}
-            {message.text}
+            <span className="font-medium">{message.text}</span>
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Profile Information */}
-        <div className="lg:col-span-2">
-          <div className="bg-white shadow-sm border rounded-lg p-6">
-            <div className="flex items-center mb-6">
-              <User className="h-6 w-6 text-primary-600 mr-3" />
-              <h2 className="text-lg font-semibold text-gray-900">Personal Information</h2>
+        <div className="lg:col-span-2 space-y-8">
+          <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+            <div className="px-8 py-6 border-b border-gray-200">
+              <div className="flex items-center">
+                <User className="h-6 w-6 text-government-dark-blue mr-3" />
+                <h2 className="text-xl font-bold text-gray-900">Personal Information</h2>
+              </div>
+              <p className="text-gray-600 mt-1">Update your personal details and contact information</p>
             </div>
+            <div className="p-8">
 
-            <form onSubmit={handleProfileUpdate} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <form onSubmit={handleProfileUpdate} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-3">
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={profileData.full_name}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, full_name: e.target.value }))}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base focus:ring-2 focus:ring-government-dark-blue focus:border-government-dark-blue transition-colors"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-3">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      value={profileData.phone}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base focus:ring-2 focus:ring-government-dark-blue focus:border-government-dark-blue transition-colors"
+                      placeholder="0771234567"
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name
+                  <label className="block text-sm font-semibold text-gray-900 mb-3">
+                    Address
                   </label>
-                  <input
-                    type="text"
-                    value={profileData.full_name}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, full_name: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    required
+                  <textarea
+                    value={profileData.address}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, address: e.target.value }))}
+                    rows={3}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base focus:ring-2 focus:ring-government-dark-blue focus:border-government-dark-blue transition-colors"
+                    placeholder="Enter your full address"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number
+                  <label className="block text-sm font-semibold text-gray-900 mb-3">
+                    Date of Birth
                   </label>
                   <input
-                    type="tel"
-                    value={profileData.phone}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    placeholder="0771234567"
+                    type="date"
+                    value={profileData.date_of_birth}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, date_of_birth: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base focus:ring-2 focus:ring-government-dark-blue focus:border-government-dark-blue transition-colors"
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Address
-                </label>
-                <textarea
-                  value={profileData.address}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, address: e.target.value }))}
-                  rows={3}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="Enter your full address"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Date of Birth
-                </label>
-                <input
-                  type="date"
-                  value={profileData.date_of_birth}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, date_of_birth: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-              </div>
-
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  {loading ? 'Saving...' : 'Save Changes'}
-                </button>
-              </div>
-            </form>
+                <div className="flex justify-end pt-4">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-government-dark-blue hover:bg-blue-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-government-dark-blue disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Save className="h-5 w-5 mr-2" />
+                    {loading ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
 
           {/* Change Password */}
-          <div className="bg-white shadow-sm border rounded-lg p-6 mt-6">
-            <div className="flex items-center mb-6">
-              <Key className="h-6 w-6 text-primary-600 mr-3" />
-              <h2 className="text-lg font-semibold text-gray-900">Change Password</h2>
+          <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+            <div className="px-8 py-6 border-b border-gray-200">
+              <div className="flex items-center">
+                <Key className="h-6 w-6 text-government-dark-blue mr-3" />
+                <h2 className="text-xl font-bold text-gray-900">Security Settings</h2>
+              </div>
+              <p className="text-gray-600 mt-1">Update your password to keep your account secure</p>
             </div>
+            <div className="p-8">
 
-            <form onSubmit={handlePasswordUpdate} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  New Password
-                </label>
-                <input
-                  type="password"
-                  value={passwordData.new_password}
-                  onChange={(e) => setPasswordData(prev => ({ ...prev, new_password: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="Enter new password"
-                  minLength={6}
-                />
-              </div>
+              <form onSubmit={handlePasswordUpdate} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-3">
+                      New Password *
+                    </label>
+                    <input
+                      type="password"
+                      value={passwordData.new_password}
+                      onChange={(e) => setPasswordData(prev => ({ ...prev, new_password: e.target.value }))}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base focus:ring-2 focus:ring-government-dark-blue focus:border-government-dark-blue transition-colors"
+                      placeholder="Enter new password"
+                      minLength={6}
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirm New Password
-                </label>
-                <input
-                  type="password"
-                  value={passwordData.confirm_password}
-                  onChange={(e) => setPasswordData(prev => ({ ...prev, confirm_password: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="Confirm new password"
-                  minLength={6}
-                />
-              </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-3">
+                      Confirm New Password *
+                    </label>
+                    <input
+                      type="password"
+                      value={passwordData.confirm_password}
+                      onChange={(e) => setPasswordData(prev => ({ ...prev, confirm_password: e.target.value }))}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base focus:ring-2 focus:ring-government-dark-blue focus:border-government-dark-blue transition-colors"
+                      placeholder="Confirm new password"
+                      minLength={6}
+                    />
+                  </div>
+                </div>
+                
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <h4 className="font-medium text-yellow-900 mb-2">Password Requirements:</h4>
+                  <ul className="text-sm text-yellow-800 space-y-1">
+                    <li>• At least 6 characters long</li>
+                    <li>• Should include letters and numbers</li>
+                    <li>• Avoid using personal information</li>
+                  </ul>
+                </div>
 
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={loading || !passwordData.new_password || !passwordData.confirm_password}
-                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Key className="h-4 w-4 mr-2" />
-                  {loading ? 'Updating...' : 'Update Password'}
-                </button>
-              </div>
-            </form>
+                <div className="flex justify-end pt-4">
+                  <button
+                    type="submit"
+                    disabled={loading || !passwordData.new_password || !passwordData.confirm_password}
+                    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-government-dark-blue hover:bg-blue-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-government-dark-blue disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Key className="h-5 w-5 mr-2" />
+                    {loading ? 'Updating...' : 'Update Password'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Account Info */}
-          <div className="bg-white shadow-sm border rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Information</h3>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center">
-                <Mail className="h-4 w-4 text-gray-400 mr-2" />
-                <div>
-                  <p className="text-gray-600">Email</p>
-                  <p className="font-medium">{user.email}</p>
+          <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+            <div className="px-8 py-6 border-b border-gray-200">
+              <h3 className="text-xl font-bold text-gray-900">Account Information</h3>
+              <p className="text-gray-600 mt-1">Your account details and verification status</p>
+            </div>
+            <div className="p-8 space-y-6">
+              <div className="flex items-start">
+                <div className="p-2 bg-blue-100 rounded-lg mr-4">
+                  <Mail className="h-5 w-5 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">Email Address</p>
+                  <p className="text-gray-600 mt-1">{user.email}</p>
                 </div>
               </div>
-              <div className="flex items-center">
-                <CreditCard className="h-4 w-4 text-gray-400 mr-2" />
-                <div>
-                  <p className="text-gray-600">NIC</p>
-                  <p className="font-medium">{user.profile?.nic || 'Not provided'}</p>
+              
+              <div className="flex items-start">
+                <div className="p-2 bg-green-100 rounded-lg mr-4">
+                  <CreditCard className="h-5 w-5 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">National Identity Card</p>
+                  <p className="text-gray-600 mt-1">{user.profile?.nic || 'Not provided'}</p>
                 </div>
               </div>
-              <div className="flex items-center">
-                <Shield className="h-4 w-4 text-gray-400 mr-2" />
-                <div>
-                  <p className="text-gray-600">Role</p>
-                  <p className="font-medium capitalize">{user.profile?.role || 'citizen'}</p>
+              
+              <div className="flex items-start">
+                <div className="p-2 bg-purple-100 rounded-lg mr-4">
+                  <Shield className="h-5 w-5 text-purple-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">Account Type</p>
+                  <p className="text-gray-600 mt-1 capitalize">{user.profile?.role || 'citizen'}</p>
                 </div>
               </div>
-              <div className="flex items-center">
-                <Calendar className="h-4 w-4 text-gray-400 mr-2" />
-                <div>
-                  <p className="text-gray-600">Member Since</p>
-                  <p className="font-medium">
-                    {new Date(user.profile?.created_at || user.created_at).toLocaleDateString()}
+              
+              <div className="flex items-start">
+                <div className="p-2 bg-yellow-100 rounded-lg mr-4">
+                  <Calendar className="h-5 w-5 text-yellow-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">Member Since</p>
+                  <p className="text-gray-600 mt-1">
+                    {new Date(user.profile?.created_at || user.created_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
                   </p>
                 </div>
               </div>
@@ -327,75 +378,102 @@ export default function ProfilePage() {
           </div>
 
           {/* Notification Preferences */}
-          <div className="bg-white shadow-sm border rounded-lg p-6">
-            <div className="flex items-center mb-4">
-              <Bell className="h-5 w-5 text-primary-600 mr-2" />
-              <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
+          <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+            <div className="px-8 py-6 border-b border-gray-200">
+              <div className="flex items-center">
+                <Bell className="h-6 w-6 text-government-dark-blue mr-3" />
+                <h3 className="text-xl font-bold text-gray-900">Notification Preferences</h3>
+              </div>
+              <p className="text-gray-600 mt-1">Control how you receive updates and reminders</p>
             </div>
             
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Email Notifications</p>
-                  <p className="text-xs text-gray-500">Receive updates via email</p>
+            <div className="p-8 space-y-6">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <p className="text-base font-semibold text-gray-900">Email Notifications</p>
+                  <p className="text-sm text-gray-600 mt-1">Receive appointment confirmations and updates via email</p>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={notifications.email}
-                  onChange={(e) => setNotifications(prev => ({ ...prev, email: e.target.checked }))}
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                />
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={notifications.email}
+                    onChange={(e) => setNotifications(prev => ({ ...prev, email: e.target.checked }))}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-government-dark-blue"></div>
+                </label>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">SMS Notifications</p>
-                  <p className="text-xs text-gray-500">Receive updates via SMS</p>
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <p className="text-base font-semibold text-gray-900">SMS Notifications</p>
+                  <p className="text-sm text-gray-600 mt-1">Get text message alerts for important updates</p>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={notifications.sms}
-                  onChange={(e) => setNotifications(prev => ({ ...prev, sms: e.target.checked }))}
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                />
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={notifications.sms}
+                    onChange={(e) => setNotifications(prev => ({ ...prev, sms: e.target.checked }))}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-government-dark-blue"></div>
+                </label>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Appointment Reminders</p>
-                  <p className="text-xs text-gray-500">24-hour appointment reminders</p>
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <p className="text-base font-semibold text-gray-900">Appointment Reminders</p>
+                  <p className="text-sm text-gray-600 mt-1">24-hour advance reminders for scheduled appointments</p>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={notifications.appointment_reminders}
-                  onChange={(e) => setNotifications(prev => ({ ...prev, appointment_reminders: e.target.checked }))}
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                />
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={notifications.appointment_reminders}
+                    onChange={(e) => setNotifications(prev => ({ ...prev, appointment_reminders: e.target.checked }))}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-government-dark-blue"></div>
+                </label>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Status Updates</p>
-                  <p className="text-xs text-gray-500">Document and appointment status changes</p>
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <p className="text-base font-semibold text-gray-900">Status Updates</p>
+                  <p className="text-sm text-gray-600 mt-1">Document approval status and appointment changes</p>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={notifications.status_updates}
-                  onChange={(e) => setNotifications(prev => ({ ...prev, status_updates: e.target.checked }))}
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                />
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={notifications.status_updates}
+                    onChange={(e) => setNotifications(prev => ({ ...prev, status_updates: e.target.checked }))}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-government-dark-blue"></div>
+                </label>
+              </div>
+
+              <div className="pt-4 border-t border-gray-200">
+                <button
+                  onClick={handleNotificationUpdate}
+                  className="w-full inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Save Notification Preferences
+                </button>
               </div>
             </div>
-
-            <button
-              onClick={handleNotificationUpdate}
-              className="w-full mt-4 btn-secondary text-sm"
-            >
-              Save Preferences
-            </button>
           </div>
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ProfilePage() {
+  return (
+    <ProtectedRoute allowedRoles={['citizen']}>
+      <DashboardLayout>
+        <ProfileContent />
+      </DashboardLayout>
+    </ProtectedRoute>
   )
 }

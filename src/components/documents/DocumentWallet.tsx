@@ -4,8 +4,9 @@ import { useState } from 'react'
 import { useAuthContext } from '@/components/auth/AuthProvider'
 import { useDocumentWallet, uploadToWallet, removeFromWallet, DOCUMENT_CATEGORIES, getCategoryLabel } from '@/hooks/useDocumentWallet'
 import { DocumentUploadForm } from './DocumentUploadForm'
-import { FileText, Upload, Trash2, CheckCircle, AlertCircle, Clock, Plus, Wallet } from 'lucide-react'
+import { FileText, Upload, Trash2, CheckCircle, AlertCircle, Clock, Plus, Wallet, Eye, Download } from 'lucide-react'
 import { format } from 'date-fns'
+import { supabase } from '@/lib/supabase'
 
 export function DocumentWallet() {
   const { user } = useAuthContext()
@@ -13,6 +14,7 @@ export function DocumentWallet() {
   const [showUploadForm, setShowUploadForm] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [viewingDocument, setViewingDocument] = useState<{url: string, name: string} | null>(null)
 
   const handleUpload = async (uploadData: {
     file: File
@@ -52,6 +54,45 @@ export function DocumentWallet() {
     } catch (error) {
       console.error('Remove failed:', error)
       alert('Failed to remove document')
+    }
+  }
+
+  const handleView = async (filePath: string, fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(filePath, 3600) // 1 hour expiry
+
+      if (error) throw error
+      
+      // Show in popup modal
+      setViewingDocument({ url: data.signedUrl, name: fileName })
+    } catch (error) {
+      console.error('Failed to view document:', error)
+      alert('Failed to view document')
+    }
+  }
+
+  const handleDownload = async (filePath: string, fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .download(filePath)
+
+      if (error) throw error
+
+      // Create download link
+      const url = URL.createObjectURL(data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileName
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Failed to download document:', error)
+      alert('Failed to download document')
     }
   }
 
@@ -235,13 +276,31 @@ export function DocumentWallet() {
                     <span className="capitalize">{document.status}</span>
                   </div>
 
-                  <button
-                    onClick={() => handleRemove(document.id)}
-                    className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                    title="Remove from wallet"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <div className="flex items-center space-x-1">
+                    <button
+                      onClick={() => handleView(document.file_path, document.file_name)}
+                      className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                      title="View document"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+
+                    <button
+                      onClick={() => handleDownload(document.file_path, document.file_name)}
+                      className="p-2 text-gray-400 hover:text-green-600 transition-colors"
+                      title="Download document"
+                    >
+                      <Download className="h-4 w-4" />
+                    </button>
+
+                    <button
+                      onClick={() => handleRemove(document.id)}
+                      className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                      title="Remove from wallet"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -275,6 +334,53 @@ export function DocumentWallet() {
           <li>• Save time - no need to upload the same documents repeatedly</li>
         </ul>
       </div>
+
+      {/* Document Viewer Modal */}
+      {viewingDocument && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-medium text-gray-900">
+                {viewingDocument.name}
+              </h3>
+              <button
+                onClick={() => setViewingDocument(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 p-4">
+              <iframe
+                src={viewingDocument.url}
+                className="w-full h-full min-h-[500px] border rounded"
+                title={viewingDocument.name}
+              />
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end space-x-3 p-4 border-t">
+              <button
+                onClick={() => window.open(viewingDocument.url, '_blank')}
+                className="btn-secondary"
+              >
+                Open in New Tab
+              </button>
+              <button
+                onClick={() => setViewingDocument(null)}
+                className="btn-primary"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

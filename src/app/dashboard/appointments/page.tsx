@@ -110,156 +110,184 @@ function AppointmentsContent() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Appointments</h1>
-          <p className="mt-1 text-gray-600">
-            Manage and track your government service appointments
-          </p>
-        </div>
-        <div className="mt-4 sm:mt-0">
-          <Link
-            href="/dashboard/book"
-            className="btn-primary"
-          >
-            <Calendar className="h-5 w-5 mr-2" />
-            Book New Appointment
-          </Link>
+      <div className="bg-white border-b border-gray-200 pb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">My Appointments</h1>
+            <p className="text-lg text-gray-600 mt-2">
+              Manage and track your government service appointments
+            </p>
+          </div>
+          <div className="mt-6 sm:mt-0">
+            <Link
+              href="/dashboard/book"
+              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-government-dark-blue hover:bg-blue-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-government-dark-blue"
+            >
+              <Calendar className="mr-2 h-5 w-5" />
+              Book New Appointment
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border">
-        <div className="flex flex-wrap gap-4 items-center">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Filter by Status
-            </label>
-            <select
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <option value="all">All Appointments</option>
-              <option value="pending">Pending</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
+      {/* Filters and Statistics */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+          <div className="flex flex-wrap gap-6 items-center">
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Filter by Status
+              </label>
+              <select
+                className="w-48 px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-government-dark-blue focus:border-government-dark-blue transition-colors"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+              >
+                <option value="all">All Appointments</option>
+                <option value="pending">Pending Confirmation</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-600">
+                Showing {filteredAppointments.length} of {appointments.length} appointments
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {appointments.filter(a => a.status === 'confirmed').length} confirmed • {appointments.filter(a => a.status === 'pending').length} pending
+              </p>
+            </div>
           </div>
-          
-          <div className="text-sm text-gray-500">
-            Showing {filteredAppointments.length} of {appointments.length} appointments
+        </div>
+        
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-gray-900">{appointments.length}</div>
+            <div className="text-sm font-medium text-gray-600">Total Appointments</div>
+            <div className="text-xs text-gray-500 mt-1">All time</div>
           </div>
         </div>
       </div>
 
       {/* Appointments List */}
       {filteredAppointments.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border p-12 text-center">
-          <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {filterStatus === 'all' ? 'No appointments yet' : `No ${filterStatus} appointments`}
-          </h3>
-          <p className="text-gray-500 mb-6">
-            {filterStatus === 'all' 
-              ? "You haven't booked any appointments yet."
-              : `You don't have any ${filterStatus} appointments.`
-            }
-          </p>
-          <Link
-            href="/dashboard/book"
-            className="btn-primary"
-          >
-            Book Your First Appointment
-          </Link>
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+          <div className="text-center py-16 px-8">
+            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Calendar className="h-12 w-12 text-gray-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              {filterStatus === 'all' ? 'No appointments yet' : `No ${filterStatus} appointments`}
+            </h3>
+            <p className="text-gray-600 mb-8 max-w-md mx-auto">
+              {filterStatus === 'all' 
+                ? "You haven't booked any appointments yet. Get started by scheduling your first government service appointment."
+                : `You don't have any ${filterStatus} appointments at the moment.`
+              }
+            </p>
+            <Link
+              href="/dashboard/book"
+              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-government-dark-blue hover:bg-blue-800 transition-colors"
+            >
+              <Calendar className="mr-2 h-5 w-5" />
+              Book Your First Appointment
+            </Link>
+          </div>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {filteredAppointments.map((appointment) => (
             <div
               key={appointment.id}
-              className="bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition-shadow"
+              className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-government-dark-blue transition-all duration-300"
             >
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex-1">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <div className="flex items-center mb-2">
-                        {getStatusIcon(appointment.status)}
-                        <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(appointment.status)}`}>
-                          {appointment.status.replace('_', ' ')}
-                        </span>
+              <div className="p-8">
+                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex-1">
+                        <div className="flex items-center mb-3">
+                          {getStatusIcon(appointment.status)}
+                          <span className={`ml-3 inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium border ${getStatusColor(appointment.status)}`}>
+                            {appointment.status.replace('_', ' ').toUpperCase()}
+                          </span>
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">
+                          {appointment.service?.name}
+                        </h3>
+                        <p className="text-base text-gray-600 font-medium">
+                          {appointment.service?.department?.name}
+                        </p>
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {appointment.service?.name}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {appointment.service?.department?.name}
-                      </p>
+                      
+                      <div className="text-right ml-6">
+                        <div className="text-base font-bold text-gray-900 mb-1">
+                          {appointment.booking_reference}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          Booked {format(new Date(appointment.created_at), 'MMM d, yyyy')}
+                        </div>
+                      </div>
                     </div>
-                    
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-gray-900">
-                        Ref: {appointment.booking_reference}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                      <div className="space-y-3">
+                        <div className="flex items-center text-gray-700">
+                          <Calendar className="h-5 w-5 text-gray-400 mr-3" />
+                          <span className="font-medium">
+                            {appointment.time_slot && 
+                              format(new Date(appointment.time_slot.start_time), 'EEEE, MMMM d, yyyy')
+                            }
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center text-gray-700">
+                          <Clock className="h-5 w-5 text-gray-400 mr-3" />
+                          <span className="font-medium">
+                            {appointment.time_slot && 
+                              `${format(new Date(appointment.time_slot.start_time), 'h:mm a')} - ${format(new Date(appointment.time_slot.end_time), 'h:mm a')}`
+                            }
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-500">
-                        Booked {format(new Date(appointment.created_at), 'MMM d, yyyy')}
+                      
+                      <div className="space-y-3">
+                        <div className="flex items-center text-gray-700">
+                          <MapPin className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
+                          <span className="font-medium">
+                            {appointment.service?.department?.address || 'Address not available'}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center text-gray-700">
+                          <Phone className="h-5 w-5 text-gray-400 mr-3" />
+                          <span className="font-medium">
+                            {appointment.service?.department?.contact_phone || 'Contact not available'}
+                          </span>
+                        </div>
                       </div>
                     </div>
+
+                    {appointment.notes && (
+                      <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h4 className="font-semibold text-blue-900 mb-2">Your Notes:</h4>
+                        <p className="text-blue-800">{appointment.notes}</p>
+                      </div>
+                    )}
+
+                    {appointment.officer_notes && (
+                      <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <h4 className="font-semibold text-yellow-900 mb-2">Officer Notes:</h4>
+                        <p className="text-yellow-800">{appointment.officer_notes}</p>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 text-gray-400 mr-2" />
-                      <span>
-                        {appointment.time_slot && 
-                          format(new Date(appointment.time_slot.start_time), 'MMM d, yyyy')
-                        }
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center">
-                      <Clock className="h-4 w-4 text-gray-400 mr-2" />
-                      <span>
-                        {appointment.time_slot && 
-                          `${format(new Date(appointment.time_slot.start_time), 'HH:mm')} - ${format(new Date(appointment.time_slot.end_time), 'HH:mm')}`
-                        }
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center">
-                      <MapPin className="h-4 w-4 text-gray-400 mr-2" />
-                      <span className="truncate">
-                        {appointment.service?.department?.address || 'Address not available'}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center">
-                      <Phone className="h-4 w-4 text-gray-400 mr-2" />
-                      <span>
-                        {appointment.service?.department?.contact_phone || 'N/A'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {appointment.notes && (
-                    <div className="mt-4 p-3 bg-gray-50 rounded text-sm">
-                      <strong>Your Notes:</strong> {appointment.notes}
-                    </div>
-                  )}
-
-                  {appointment.officer_notes && (
-                    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm">
-                      <strong>Officer Notes:</strong> {appointment.officer_notes}
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-col gap-2">
-                  <div className="flex items-center justify-between lg:justify-start lg:flex-col lg:items-stretch gap-2">
+                  <div className="mt-6 lg:mt-0 lg:ml-8 flex flex-col items-center gap-4">
                     {(appointment.status === 'confirmed' || appointment.status === 'pending') && (
                       <QRCodeThumbnail 
                         appointmentId={appointment.id}
@@ -268,21 +296,21 @@ function AppointmentsContent() {
                       />
                     )}
                     
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-3 w-full min-w-[140px]">
                       <button
-                        className="btn-secondary text-sm"
+                        className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition-colors font-medium"
                         onClick={() => openQRModal(appointment)}
                       >
-                        <Eye className="h-4 w-4 mr-1" />
+                        <Eye className="h-4 w-4 mr-2" />
                         View Details
                       </button>
                       
                       {(appointment.status === 'confirmed' || appointment.status === 'pending') && (
                         <button
-                          className="btn-secondary text-sm"
+                          className="inline-flex items-center justify-center px-4 py-2 border border-government-dark-blue text-government-dark-blue bg-white rounded-lg hover:bg-blue-50 transition-colors font-medium"
                           onClick={() => openQRModal(appointment)}
                         >
-                          <QrCode className="h-4 w-4 mr-1" />
+                          <QrCode className="h-4 w-4 mr-2" />
                           QR Code
                         </button>
                       )}
@@ -291,7 +319,7 @@ function AppointmentsContent() {
                         <button
                           onClick={() => handleCancelAppointment(appointment.id)}
                           disabled={cancellingId === appointment.id}
-                          className="text-sm px-3 py-2 border border-red-300 text-red-700 rounded-md hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="inline-flex items-center justify-center px-4 py-2 border border-red-300 text-red-700 bg-white rounded-lg hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                         >
                           {cancellingId === appointment.id ? 'Cancelling...' : 'Cancel'}
                         </button>
@@ -306,28 +334,57 @@ function AppointmentsContent() {
       )}
 
       {/* Helpful Information */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="text-lg font-medium text-blue-900 mb-3">
-          📋 Appointment Guidelines
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-800">
-          <div>
-            <h4 className="font-medium mb-2">Before Your Appointment:</h4>
-            <ul className="space-y-1 list-disc list-inside">
-              <li>Arrive 15 minutes early</li>
-              <li>Bring all required documents</li>
-              <li>Have your booking reference ready</li>
-              <li>Check for any updates via SMS/email</li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-medium mb-2">Need Help?</h4>
-            <ul className="space-y-1">
-              <li>📧 Email: support@sevanet.lk</li>
-              <li>📞 Hotline: 1919</li>
-              <li>🕒 Support Hours: 8 AM - 6 PM</li>
-              <li>💬 Live Chat: Available on website</li>
-            </ul>
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+        <div className="px-8 py-6 border-b border-gray-200">
+          <h3 className="text-xl font-bold text-gray-900">
+            Appointment Guidelines
+          </h3>
+          <p className="text-gray-600 mt-1">Important information for your government service appointments</p>
+        </div>
+        <div className="p-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <h4 className="font-semibold text-gray-900 text-lg">Before Your Appointment</h4>
+              <ul className="space-y-3 text-gray-700">
+                <li className="flex items-start">
+                  <div className="w-2 h-2 bg-government-dark-blue rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                  <span>Arrive 15 minutes early for check-in procedures</span>
+                </li>
+                <li className="flex items-start">
+                  <div className="w-2 h-2 bg-government-dark-blue rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                  <span>Bring all required original documents and photocopies</span>
+                </li>
+                <li className="flex items-start">
+                  <div className="w-2 h-2 bg-government-dark-blue rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                  <span>Keep your booking reference number accessible</span>
+                </li>
+                <li className="flex items-start">
+                  <div className="w-2 h-2 bg-government-dark-blue rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                  <span>Check for updates via SMS or email notifications</span>
+                </li>
+              </ul>
+            </div>
+            <div className="space-y-4">
+              <h4 className="font-semibold text-gray-900 text-lg">Need Assistance?</h4>
+              <div className="space-y-4 text-gray-700">
+                <div className="flex items-center">
+                  <Mail className="h-5 w-5 text-gray-400 mr-3" />
+                  <span>support@sevanet.lk</span>
+                </div>
+                <div className="flex items-center">
+                  <Phone className="h-5 w-5 text-gray-400 mr-3" />
+                  <span>1919 (Toll-free hotline)</span>
+                </div>
+                <div className="flex items-center">
+                  <Clock className="h-5 w-5 text-gray-400 mr-3" />
+                  <span>Mon-Fri: 8:00 AM - 6:00 PM</span>
+                </div>
+                <div className="flex items-center">
+                  <AlertCircle className="h-5 w-5 text-gray-400 mr-3" />
+                  <span>Emergency services available 24/7</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
