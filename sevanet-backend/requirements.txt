@@ -1,0 +1,17 @@
+# Core FastAPI dependencies
+fastapi==0.104.1
+uvicorn==0.24.0
+python-multipart==0.0.6
+python-decouple==3.8
+
+# AI and Image Processing
+langchain
+langchain-google-genai
+google-generativeai
+pillow
+
+# HTTP Client for Supabase REST API
+httpx
+
+# File handling
+aiofiles
