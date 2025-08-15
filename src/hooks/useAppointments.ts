@@ -282,9 +282,9 @@ export async function bookAppointment(appointmentData: {
     // Don't fail the booking if this fails
   }
 
-  // Send automatic SMS confirmation
+  // Send automatic notification (SMS + Email)
   try {
-    await fetch('/api/notifications/send', {
+    const notificationResponse = await fetch('/api/notifications/send', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -295,9 +295,20 @@ export async function bookAppointment(appointmentData: {
         userId: appointmentData.citizen_id
       }),
     })
-  } catch (smsError) {
-    console.warn('SMS confirmation failed:', smsError)
-    // Don't fail the booking if SMS fails
+    
+    const notificationResult = await notificationResponse.json()
+    
+    if (notificationResult.success) {
+      console.log('Notification sent successfully:', {
+        sms: notificationResult.smsResult?.success,
+        email: notificationResult.emailResult?.success
+      })
+    } else {
+      console.warn('Notification failed:', notificationResult.error)
+    }
+  } catch (notificationError) {
+    console.warn('Notification request failed:', notificationError)
+    // Don't fail the booking if notification fails
   }
 
   return data

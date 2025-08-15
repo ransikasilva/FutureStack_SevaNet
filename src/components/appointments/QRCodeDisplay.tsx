@@ -51,8 +51,22 @@ export function QRCodeDisplay({
     setError(null)
 
     try {
-      const response = await fetch(`/api/appointments/${appointmentId}/qr`)
+      console.log('QRCodeDisplay - Generating QR for appointment:', appointmentId)
+      const response = await fetch(`/api/appointments/${appointmentId}/qr`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+      console.log('QRCodeDisplay - API response:', { 
+        status: response.status, 
+        statusText: response.statusText,
+        url: response.url
+      })
+      
       const data = await response.json()
+      console.log('QRCodeDisplay - Response data:', data)
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to generate QR code')
@@ -197,6 +211,7 @@ export function QRCodeThumbnail({
       try {
         const response = await fetch(`/api/appointments/${appointmentId}/qr`, {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ type: 'simple' })
         })

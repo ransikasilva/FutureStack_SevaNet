@@ -136,16 +136,30 @@ function ProfileContent() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 pb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Profile Settings</h1>
-            <p className="text-lg text-gray-600 mt-2">
-              Manage your account information and notification preferences
-            </p>
+    <div className="space-y-10">
+      {/* Professional Header */}
+      <div className="relative bg-gradient-to-r from-government-dark-blue via-blue-700 to-government-dark-blue rounded-3xl p-8 lg:p-12 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-government-gold/10"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-government-gold/10 rounded-full -mr-48 -mt-48"></div>
+        
+        <div className="relative">
+          <div className="flex items-center mb-4">
+            <div className="bg-white/20 p-2 rounded-xl mr-3">
+              <User className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-blue-100 text-sm font-bold uppercase tracking-wide">Account Management</span>
           </div>
+          <h1 className="text-4xl lg:text-5xl font-black text-white mb-4 leading-tight">
+            Profile Settings
+          </h1>
+          <p className="text-xl text-blue-100 max-w-2xl leading-relaxed">
+            Manage your account information, security settings, and notification preferences
+          </p>
+        </div>
+      </div>
+
+      <div className="space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div className="mt-6 sm:mt-0 flex items-center space-x-4">
             <div className="flex items-center text-sm text-gray-500">
               <Shield className="h-4 w-4 mr-1" />

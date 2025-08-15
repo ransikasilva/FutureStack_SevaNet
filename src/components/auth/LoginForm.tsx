@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { signIn } from '@/lib/auth'
+import { supabase } from '@/lib/supabase'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
 
 interface LoginFormProps {
@@ -32,9 +33,49 @@ export function LoginForm({ onSuccess, redirectTo = '/dashboard' }: LoginFormPro
       
       onSuccess?.()
       
+      // Get user profile to determine role-based redirect
+      let finalRedirectTo = redirectTo
+      if (result.user) {
+        console.log('Login - User ID:', result.user.id, 'Email:', result.user.email)
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role, full_name')
+            .eq('user_id', result.user.id)
+            .single()
+          
+          console.log('Login - Profile query result:', { profile, profileError })
+          
+          if (profile?.role) {
+            console.log('Login - User role detected:', profile.role)
+            switch (profile.role) {
+              case 'admin':
+                finalRedirectTo = '/admin'
+                console.log('Login - Redirecting admin to /admin')
+                break
+              case 'officer':
+                finalRedirectTo = '/officer'
+                console.log('Login - Redirecting officer to /officer')
+                break
+              default: // citizen
+                finalRedirectTo = '/dashboard'
+                console.log('Login - Redirecting citizen to /dashboard')
+                break
+            }
+          } else {
+            console.log('Login - No role found in profile, using default redirect')
+          }
+        } catch (profileError) {
+          console.error('Failed to get user profile:', profileError)
+          // Use default redirect if profile fetch fails
+        }
+      }
+      
+      console.log('Login - Final redirect URL:', finalRedirectTo)
+      
       // Add a small delay before redirect to ensure state is updated
       setTimeout(() => {
-        router.push(redirectTo)
+        router.push(finalRedirectTo)
       }, 100)
       
     } catch (err: any) {

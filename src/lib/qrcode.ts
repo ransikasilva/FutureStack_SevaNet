@@ -17,15 +17,37 @@ export interface QRCodeData {
 
 export class QRCodeService {
   /**
+   * Generate unique verification code
+   */
+  static generateVerificationCode(): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    let code = ''
+    for (let i = 0; i < 8; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    return code
+  }
+
+  /**
    * Generate QR code for appointment
    */
-  static async generateAppointmentQR(appointmentData: QRCodeData): Promise<string> {
+  static async generateAppointmentQR(appointmentData: Partial<QRCodeData>): Promise<string> {
     try {
+      // Generate unique verification code (8-digit alphanumeric)
+      const verificationCode = this.generateVerificationCode()
+      
       const qrData = {
-        type: 'sevanet_appointment',
+        type: 'SEVANET_APPOINTMENT',
         version: '1.0',
-        ...appointmentData,
-        verificationUrl: `${process.env.NEXT_PUBLIC_APP_URL}/verify/${appointmentData.bookingReference}`
+        code: verificationCode,
+        ref: appointmentData.bookingReference,
+        citizen: appointmentData.citizenName,
+        service: appointmentData.serviceName,
+        dept: appointmentData.departmentName,
+        date: appointmentData.appointmentDate,
+        time: appointmentData.appointmentTime,
+        status: appointmentData.status,
+        generated: new Date().toISOString().substring(0, 10) // YYYY-MM-DD
       }
 
       const qrString = JSON.stringify(qrData)
@@ -51,11 +73,18 @@ export class QRCodeService {
   }
 
   /**
-   * Generate simple QR code with just booking reference for quick verification
+   * Generate simple QR code with verification code
    */
   static async generateSimpleQR(bookingReference: string): Promise<string> {
     try {
-      const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify/${bookingReference}`
+      const verificationCode = this.generateVerificationCode()
+      
+      const simpleQrData = {
+        type: 'SEVANET_VERIFY',
+        code: verificationCode,
+        ref: bookingReference,
+        generated: new Date().toISOString().substring(0, 10)
+      }
       
       const qrCodeOptions = {
         errorCorrectionLevel: 'M' as const,
@@ -69,7 +98,7 @@ export class QRCodeService {
         width: 200
       }
 
-      const qrCodeDataURL = await QRCode.toDataURL(verificationUrl, qrCodeOptions)
+      const qrCodeDataURL = await QRCode.toDataURL(JSON.stringify(simpleQrData), qrCodeOptions)
       return qrCodeDataURL
     } catch (error) {
       console.error('Simple QR Code generation failed:', error)

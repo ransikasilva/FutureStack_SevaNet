@@ -214,159 +214,184 @@ export function DocumentReviewInterface({ departmentId, officerId }: DocumentRev
   )
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Document Review</h2>
-          <p className="text-gray-600">Review and manage citizen-uploaded documents</p>
+    <div className="space-y-10">
+      {/* Professional Header */}
+      <div className="relative bg-gradient-to-r from-government-dark-blue via-blue-700 to-government-dark-blue rounded-3xl p-8 lg:p-12 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-government-gold/10"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-government-gold/10 rounded-full -mr-48 -mt-48"></div>
+        
+        <div className="relative">
+          <div className="flex items-center mb-4">
+            <div className="bg-white/20 p-2 rounded-xl mr-3">
+              <FileText className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-blue-100 text-sm font-bold uppercase tracking-wide">Officer Dashboard</span>
+          </div>
+          <h1 className="text-4xl lg:text-5xl font-black text-white mb-4 leading-tight">
+            Document Review
+          </h1>
+          <p className="text-xl text-blue-100 max-w-2xl leading-relaxed">
+            Review and manage citizen-uploaded documents efficiently and securely
+          </p>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border">
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-          <div className="flex items-center space-x-2">
-            <Search className="h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search documents, citizens, or booking references..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-64"
-            />
-          </div>
+      {/* Professional Filters */}
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+        <div className="px-8 py-6 border-b border-gray-200">
+          <h2 className="text-xl font-bold text-gray-900">Search & Filter Documents</h2>
+          <p className="text-gray-600 mt-1">Find and manage uploaded documents</p>
+        </div>
+        <div className="p-8">
+          <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
+            <div className="flex items-center space-x-3 flex-1">
+              <div className="p-2 bg-gray-100 rounded-lg">
+                <Search className="h-5 w-5 text-gray-600" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search documents, citizens, or booking references..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-1 border border-gray-300 rounded-lg px-4 py-3 text-base focus:ring-2 focus:ring-government-dark-blue focus:border-government-dark-blue transition-colors"
+              />
+            </div>
 
-          <div className="flex items-center space-x-2">
-            <Filter className="h-5 w-5 text-gray-400" />
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as any)}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            >
-              <option value="all">All Documents</option>
-              <option value="pending">Pending Review</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-            </select>
-          </div>
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-gray-100 rounded-lg">
+                <Filter className="h-5 w-5 text-gray-600" />
+              </div>
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value as any)}
+                className="border border-gray-300 rounded-lg px-4 py-3 text-base focus:ring-2 focus:ring-government-dark-blue focus:border-government-dark-blue transition-colors min-w-[160px]"
+              >
+                <option value="all">All Documents</option>
+                <option value="pending">Pending Review</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
 
-          <div className="text-sm text-gray-500">
-            {filteredDocuments.length} documents found
+            <div className="text-sm font-medium text-gray-600 bg-gray-50 px-4 py-3 rounded-lg">
+              {filteredDocuments.length} documents found
+            </div>
           </div>
         </div>
       </div>
 
       {/* Documents List */}
       {loading ? (
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="text-gray-600 mt-4">Loading documents...</p>
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-16 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-government-dark-blue mx-auto"></div>
+          <p className="text-gray-600 mt-4 font-medium">Loading documents...</p>
         </div>
       ) : filteredDocuments.length === 0 ? (
-        <div className="text-center py-12">
-          <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900">No documents found</h3>
-          <p className="text-gray-600">No documents match your current filters.</p>
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-16 text-center">
+          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <FileText className="h-12 w-12 text-gray-400" />
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">No documents found</h3>
+          <p className="text-gray-600">No documents match your current filter criteria.</p>
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="space-y-6">
           {filteredDocuments.map((document) => (
-            <div key={document.id} className="bg-white rounded-lg shadow-sm border p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-start space-x-4">
-                    <div className="flex-shrink-0">
-                      <FileText className="h-10 w-10 text-primary-600" />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900 truncate">
-                          {document.file_name}
-                        </h3>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(document.status)}`}>
-                          {document.status}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                        <div className="space-y-1">
-                          <div className="flex items-center">
-                            <User className="h-4 w-4 mr-2" />
-                            <span>{document.appointment.citizen.full_name}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <Calendar className="h-4 w-4 mr-2" />
-                            <span>Ref: {document.appointment.booking_reference}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <FileText className="h-4 w-4 mr-2" />
-                            <span>{document.document_category}</span>
-                          </div>
-                        </div>
-
-                        <div className="space-y-1">
-                          <div className="flex items-center">
-                            <Clock className="h-4 w-4 mr-2" />
-                            <span>
-                              Uploaded {new Date(document.uploaded_at).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <div className="flex items-center">
-                            <AlertCircle className="h-4 w-4 mr-2" />
-                            <span>
-                              {formatFileSize(document.file_size)} • {document.file_type}
-                            </span>
-                          </div>
-                          <p className="text-sm">
-                            <strong>Service:</strong> {document.appointment.service.name}
-                          </p>
+            <div key={document.id} className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
+              <div className="p-8">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 pr-8">
+                    <div className="flex items-start space-x-6 mb-6">
+                      <div className="flex-shrink-0">
+                        <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center">
+                          <FileText className="h-8 w-8 text-blue-600" />
                         </div>
                       </div>
 
-                      {document.officer_comments && (
-                        <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
-                          <p className="text-sm text-blue-800">
-                            <strong>Officer Comments:</strong> {document.officer_comments}
-                          </p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-xl font-bold text-gray-900 truncate">
+                            {document.file_name}
+                          </h3>
+                          <span className={`px-4 py-2 rounded-xl text-sm font-bold ${getStatusColor(document.status)} border`}>
+                            {document.status.charAt(0).toUpperCase() + document.status.slice(1)}
+                          </span>
                         </div>
-                      )}
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-medium text-gray-600">Citizen:</span>
+                              <span className="text-sm text-gray-900">{document.appointment.citizen.full_name}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-medium text-gray-600">Reference:</span>
+                              <span className="text-sm text-gray-900 font-mono">{document.appointment.booking_reference}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-medium text-gray-600">Category:</span>
+                              <span className="text-sm text-gray-900">{document.document_category}</span>
+                            </div>
+                          </div>
+
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-medium text-gray-600">Uploaded:</span>
+                              <span className="text-sm text-gray-900">{new Date(document.uploaded_at).toLocaleDateString()}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-medium text-gray-600">File Size:</span>
+                              <span className="text-sm text-gray-900">{formatFileSize(document.file_size)}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-medium text-gray-600">Service:</span>
+                              <span className="text-sm text-gray-900">{document.appointment.service.name}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {document.officer_comments && (
+                          <div className="mt-6 p-6 bg-blue-50 border border-blue-200 rounded-xl">
+                            <h4 className="font-bold text-blue-900 mb-2">Officer Comments:</h4>
+                            <p className="text-blue-800 leading-relaxed">{document.officer_comments}</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex flex-col space-y-2 ml-4">
-                  <button
-                    onClick={() => previewDocument(document)}
-                    className="btn-secondary text-sm"
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    Preview
-                  </button>
-
-                  <button
-                    onClick={() => downloadDocument(document)}
-                    className="btn-secondary text-sm"
-                  >
-                    <Download className="h-4 w-4 mr-1" />
-                    Download
-                  </button>
-
-                  {document.status === 'pending' && (
+                  <div className="flex flex-col space-y-3 w-40 flex-shrink-0">
                     <button
-                      onClick={() => {
-                        setSelectedDocument(document)
-                        setReviewModal(true)
-                        setReviewComments('')
-                        setReviewAction('approve')
-                      }}
-                      className="btn-primary text-sm"
+                      onClick={() => previewDocument(document)}
+                      className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
                     >
-                      <MessageSquare className="h-4 w-4 mr-1" />
-                      Review
+                      <Eye className="h-4 w-4 mr-2" />
+                      Preview
                     </button>
-                  )}
+
+                    <button
+                      onClick={() => downloadDocument(document)}
+                      className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </button>
+
+                    {document.status === 'pending' && (
+                      <button
+                        onClick={() => {
+                          setSelectedDocument(document)
+                          setReviewModal(true)
+                          setReviewComments('')
+                          setReviewAction('approve')
+                        }}
+                        className="inline-flex items-center justify-center px-3 py-2 border border-transparent text-white bg-government-dark-blue rounded-lg hover:bg-blue-800 transition-colors font-medium text-sm"
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Review
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

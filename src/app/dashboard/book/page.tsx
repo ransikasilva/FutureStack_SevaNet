@@ -19,18 +19,21 @@ function BookAppointmentContent() {
 
   if (bookingComplete && completedAppointment) {
     return (
-      <div className="space-y-8">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 pb-8">
-          <div className="text-center">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="h-12 w-12 text-green-600" />
+      <div className="space-y-10">
+        {/* Professional Success Header */}
+        <div className="relative bg-gradient-to-r from-emerald-500 via-green-600 to-emerald-500 rounded-3xl p-8 lg:p-12 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-green-600/20 to-emerald-400/10"></div>
+          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-300/10 rounded-full -mr-48 -mt-48"></div>
+          
+          <div className="relative text-center">
+            <div className="w-24 h-24 bg-white/20 rounded-3xl flex items-center justify-center mx-auto mb-6 backdrop-blur-sm shadow-xl">
+              <CheckCircle className="h-14 w-14 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-3">
-              Appointment Booked Successfully!
+            <h1 className="text-4xl lg:text-5xl font-black text-white mb-4 leading-tight">
+              Booking Confirmed!
             </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Your government service appointment has been confirmed and scheduled. You will receive detailed confirmation via email and SMS within the next few minutes.
+            <p className="text-xl text-green-100 max-w-3xl mx-auto leading-relaxed">
+              Your government service appointment has been successfully scheduled. Confirmation details have been sent to your email and SMS.
             </p>
           </div>
         </div>
@@ -131,18 +134,25 @@ function BookAppointmentContent() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 pb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Book New Appointment
-            </h1>
-            <p className="text-lg text-gray-600 mt-2">
-              Schedule your government service appointment with our streamlined booking system
-            </p>
+    <div className="space-y-10">
+      {/* Professional Header */}
+      <div className="relative bg-gradient-to-r from-government-dark-blue via-blue-700 to-government-dark-blue rounded-3xl p-8 lg:p-12 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-government-gold/10"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-government-gold/10 rounded-full -mr-48 -mt-48"></div>
+        
+        <div className="relative">
+          <div className="flex items-center mb-4">
+            <div className="bg-white/20 p-2 rounded-xl mr-3">
+              <Calendar className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-blue-100 text-sm font-bold uppercase tracking-wide">Service Booking</span>
           </div>
+          <h1 className="text-4xl lg:text-5xl font-black text-white mb-4 leading-tight">
+            Book New Appointment
+          </h1>
+          <p className="text-xl text-blue-100 max-w-2xl leading-relaxed">
+            Schedule your government service appointment with our secure, streamlined booking system
+          </p>
         </div>
       </div>
 

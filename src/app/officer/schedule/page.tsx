@@ -174,91 +174,106 @@ export default function OfficerSchedulePage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Schedule Calendar</h1>
-          <p className="text-gray-600">Department appointment calendar</p>
-        </div>
-
-        <div className="flex items-center space-x-4">
-          {/* View Toggle */}
-          <div className="flex rounded-lg border border-gray-300 overflow-hidden">
-            {(['month', 'week', 'day'] as const).map((viewType) => (
-              <button
-                key={viewType}
-                onClick={() => setView(viewType)}
-                className={`px-4 py-2 text-sm font-medium capitalize ${
-                  view === viewType
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                {viewType}
-              </button>
-            ))}
+    <div className="space-y-10">
+      {/* Professional Header */}
+      <div className="relative bg-gradient-to-r from-government-dark-blue via-blue-700 to-government-dark-blue rounded-3xl p-8 lg:p-12 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-government-gold/10"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-government-gold/10 rounded-full -mr-48 -mt-48"></div>
+        
+        <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between">
+          <div>
+            <div className="flex items-center mb-4">
+              <div className="bg-white/20 p-2 rounded-xl mr-3">
+                <Calendar className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-blue-100 text-sm font-bold uppercase tracking-wide">Officer Dashboard</span>
+            </div>
+            <h1 className="text-4xl lg:text-5xl font-black text-white mb-4 leading-tight">
+              Schedule Calendar
+            </h1>
+            <p className="text-xl text-blue-100 max-w-2xl leading-relaxed">
+              View and manage your department appointment calendar
+            </p>
+          </div>
+          <div className="mt-6 lg:mt-0">
+            {/* View Toggle */}
+            <div className="flex rounded-xl overflow-hidden backdrop-blur-sm border border-white/30">
+              {(['month', 'week', 'day'] as const).map((viewType) => (
+                <button
+                  key={viewType}
+                  onClick={() => setView(viewType)}
+                  className={`px-6 py-3 text-sm font-bold capitalize transition-all duration-300 ${
+                    view === viewType
+                      ? 'bg-white text-government-dark-blue shadow-lg'
+                      : 'bg-white/20 text-white hover:bg-white/30'
+                  }`}
+                >
+                  {viewType}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Calendar Navigation */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+        <div className="px-8 py-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-6">
               <button
                 onClick={() => navigateMonth('prev')}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-3 hover:bg-gray-100 rounded-xl transition-colors"
               >
-                <ChevronLeft className="h-5 w-5 text-gray-600" />
+                <ChevronLeft className="h-6 w-6 text-gray-600" />
               </button>
               
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-2xl font-bold text-gray-900">
                 {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
               </h2>
               
               <button
                 onClick={() => navigateMonth('next')}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-3 hover:bg-gray-100 rounded-xl transition-colors"
               >
-                <ChevronRight className="h-5 w-5 text-gray-600" />
+                <ChevronRight className="h-6 w-6 text-gray-600" />
               </button>
             </div>
 
-            <div className="text-sm text-gray-600">
-              {schedule.length} total appointments
+            <div className="bg-gray-50 px-4 py-3 rounded-xl">
+              <span className="text-sm font-medium text-gray-600">Total Appointments: </span>
+              <span className="text-sm font-bold text-gray-900">{schedule.length}</span>
             </div>
           </div>
         </div>
 
         {/* Calendar Grid */}
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-            <p className="text-gray-600 mt-4">Loading calendar...</p>
+          <div className="p-16 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-government-dark-blue mx-auto"></div>
+            <p className="text-gray-600 mt-4 font-medium">Loading calendar...</p>
           </div>
         ) : (
-          <div className="p-6">
+          <div className="p-8">
             {/* Week Day Headers */}
-            <div className="grid grid-cols-7 gap-px mb-2">
+            <div className="grid grid-cols-7 gap-2 mb-4">
               {weekDays.map((day) => (
-                <div key={day} className="p-2 text-center text-sm font-medium text-gray-500">
+                <div key={day} className="p-3 text-center text-sm font-bold text-gray-700 bg-gray-50 rounded-lg">
                   {day}
                 </div>
               ))}
             </div>
 
             {/* Calendar Days */}
-            <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden">
+            <div className="grid grid-cols-7 gap-2 bg-gray-100 p-2 rounded-xl">
               {generateCalendarDays().map((day, index) => (
                 <div
                   key={index}
-                  className={`min-h-[120px] bg-white p-2 ${
-                    !day.isCurrentMonth ? 'bg-gray-50' : ''
-                  } ${day.isToday ? 'bg-blue-50 border-2 border-blue-200' : ''}`}
+                  className={`min-h-[120px] bg-white p-3 rounded-lg border transition-all duration-200 hover:shadow-md ${
+                    !day.isCurrentMonth ? 'bg-gray-50 opacity-60' : ''
+                  } ${day.isToday ? 'bg-blue-50 border-blue-300 border-2' : 'border-gray-200'}`}
                 >
-                  <div className={`text-sm font-medium mb-1 ${
+                  <div className={`text-sm font-bold mb-2 ${
                     !day.isCurrentMonth ? 'text-gray-400' : 
                     day.isToday ? 'text-blue-600' : 'text-gray-900'
                   }`}>
@@ -267,26 +282,26 @@ export default function OfficerSchedulePage() {
 
                   {/* Appointments for this day */}
                   <div className="space-y-1">
-                    {day.appointments.slice(0, 3).map((appointment) => (
+                    {day.appointments.slice(0, 2).map((appointment) => (
                       <div
                         key={appointment.id}
                         onClick={() => setSelectedAppointment(appointment)}
-                        className={`text-xs p-1 rounded cursor-pointer hover:opacity-80 transition-opacity ${
+                        className={`text-xs p-2 rounded-lg cursor-pointer hover:scale-105 transition-all duration-200 ${
                           getStatusColor(appointment.status)
-                        }`}
+                        } border`}
                       >
-                        <div className="font-medium truncate">
+                        <div className="font-bold truncate">
                           {appointment.citizen?.full_name || 'Unknown'}
                         </div>
-                        <div className="truncate opacity-75">
+                        <div className="truncate opacity-80">
                           {appointment.service?.name || 'Service'}
                         </div>
                       </div>
                     ))}
                     
-                    {day.appointments.length > 3 && (
-                      <div className="text-xs text-gray-500 px-1">
-                        +{day.appointments.length - 3} more
+                    {day.appointments.length > 2 && (
+                      <div className="text-xs text-gray-600 px-2 py-1 bg-gray-100 rounded-lg font-medium">
+                        +{day.appointments.length - 2} more
                       </div>
                     )}
                   </div>
@@ -298,29 +313,36 @@ export default function OfficerSchedulePage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Quick Actions</h2>
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+        <div className="px-8 py-6 border-b border-gray-200">
+          <h2 className="text-xl font-bold text-gray-900">Quick Actions</h2>
+          <p className="text-gray-600 mt-1">Navigate to other officer functions</p>
         </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="p-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <Link
               href="/officer/appointments"
-              className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors"
+              className="group flex items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-xl hover:border-government-dark-blue hover:bg-blue-50 transition-all duration-300"
             >
               <div className="text-center">
-                <FileText className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                <span className="text-sm font-medium text-gray-900">Manage All Appointments</span>
+                <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
+                  <FileText className="h-8 w-8 text-blue-600" />
+                </div>
+                <span className="text-base font-bold text-gray-900 group-hover:text-government-dark-blue transition-colors">Manage All Appointments</span>
+                <p className="text-sm text-gray-600 mt-2">View and manage appointment requests</p>
               </div>
             </Link>
 
             <Link
               href="/officer/documents"
-              className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors"
+              className="group flex items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-xl hover:border-government-dark-blue hover:bg-blue-50 transition-all duration-300"
             >
               <div className="text-center">
-                <FileText className="h-8 w-8 text-yellow-600 mx-auto mb-2" />
-                <span className="text-sm font-medium text-gray-900">Review Documents</span>
+                <div className="w-16 h-16 bg-yellow-100 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-yellow-200 transition-colors">
+                  <FileText className="h-8 w-8 text-yellow-600" />
+                </div>
+                <span className="text-base font-bold text-gray-900 group-hover:text-government-dark-blue transition-colors">Review Documents</span>
+                <p className="text-sm text-gray-600 mt-2">Review uploaded citizen documents</p>
               </div>
             </Link>
           </div>

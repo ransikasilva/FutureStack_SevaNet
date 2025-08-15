@@ -293,7 +293,14 @@ export function useTodaysSchedule(departmentId: string) {
       try {
         console.log('Fetching schedule for department:', departmentId)
 
-        // Get all appointments for this department with time slots
+        // Get today's date in YYYY-MM-DD format
+        const today = new Date()
+        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString()
+        const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString()
+
+        console.log('Filtering appointments for today:', { todayStart, todayEnd })
+
+        // Get appointments for this department with time slots that are scheduled for today
         const { data, error } = await supabase
           .from('appointments')
           .select(`
@@ -301,12 +308,14 @@ export function useTodaysSchedule(departmentId: string) {
             services!inner(
               id, name, department_id
             ),
-            time_slots(
+            time_slots!inner(
               id, start_time, end_time
             )
           `)
           .eq('services.department_id', departmentId)
-          .order('created_at', { ascending: false })
+          .gte('time_slots.start_time', todayStart)
+          .lt('time_slots.start_time', todayEnd)
+          .order('time_slots.start_time', { ascending: true })
 
         if (error) {
           console.error('Schedule query error:', error)

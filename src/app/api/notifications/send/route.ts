@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { notificationService } from '@/lib/notifications'
+import { QRCodeService } from '@/lib/qrcode'
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,7 +50,8 @@ export async function POST(request: NextRequest) {
         ),
         citizens:citizen_id (
           full_name,
-          phone
+          phone,
+          user_id
         ),
         time_slots:time_slot_id (
           start_time,
@@ -77,7 +79,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let smsResult
+    // Get citizen's email from auth.users table
+    let citizenEmail = null
+    if (citizen.user_id) {
+      const { data: authUser } = await supabase.auth.admin.getUserById(citizen.user_id)
+      citizenEmail = authUser.user?.email
+    }
+
     const appointmentDate = new Date(timeSlot.start_time).toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -90,22 +98,50 @@ export async function POST(request: NextRequest) {
     })
 
     // Send appropriate notification based on type
+    let notificationResult
     switch (type) {
       case 'appointment_confirmation':
-        smsResult = await notificationService.sendAppointmentConfirmation({
+        // Generate QR code for email
+        let qrCodeDataUrl = null
+        try {
+          const qrData = {
+            appointmentId: appointment.id,
+            bookingReference: appointment.booking_reference,
+            citizenId: citizen.id,
+            serviceId: service.id,
+            appointmentDate,
+            appointmentTime,
+            departmentName: service.departments.name,
+            serviceName: service.name,
+            citizenName: citizen.full_name,
+            citizenPhone: citizen.phone || '',
+            status: appointment.status,
+            generatedAt: new Date().toISOString()
+          }
+          qrCodeDataUrl = await QRCodeService.generateAppointmentQR(qrData)
+        } catch (qrError) {
+          console.warn('QR code generation failed for notification:', qrError)
+          // Continue without QR code
+        }
+
+        notificationResult = await notificationService.sendAppointmentConfirmation({
           phone: citizen.phone,
+          email: citizenEmail || undefined,
           citizenName: citizen.full_name,
           serviceName: service.name,
           appointmentDate,
           appointmentTime,
           bookingReference: appointment.booking_reference,
-          department: service.departments.name
+          department: service.departments.name,
+          appointmentId: appointment.id,
+          qrCodeDataUrl: qrCodeDataUrl || undefined
         })
         break
 
       case 'appointment_reminder':
-        smsResult = await notificationService.sendAppointmentReminder({
+        notificationResult = await notificationService.sendAppointmentReminder({
           phone: citizen.phone,
+          email: citizenEmail || undefined,
           citizenName: citizen.full_name,
           serviceName: service.name,
           appointmentDate,
@@ -116,8 +152,9 @@ export async function POST(request: NextRequest) {
         break
 
       case 'appointment_cancelled':
-        smsResult = await notificationService.sendAppointmentCancellation({
+        notificationResult = await notificationService.sendAppointmentCancellation({
           phone: citizen.phone,
+          email: citizenEmail || undefined,
           citizenName: citizen.full_name,
           serviceName: service.name,
           appointmentDate,
@@ -134,8 +171,9 @@ export async function POST(request: NextRequest) {
           )
         }
         
-        smsResult = await notificationService.sendDocumentStatusUpdate({
+        notificationResult = await notificationService.sendDocumentStatusUpdate({
           phone: citizen.phone,
+          email: citizenEmail || undefined,
           citizenName: citizen.full_name,
           documentName: data.documentName,
           status: data.status,
@@ -157,17 +195,21 @@ export async function POST(request: NextRequest) {
       appointmentId,
       type,
       title: `${type.replace('_', ' ')} notification`,
-      message: 'SMS notification sent',
+      message: 'Notification sent via SMS and Email',
       recipientPhone: citizen.phone,
-      status: smsResult.success ? 'sent' : 'failed',
-      smsMessageId: smsResult.messageId,
-      error: smsResult.error
+      recipientEmail: citizenEmail || undefined,
+      status: notificationResult.success ? 'sent' : 'failed',
+      smsMessageId: notificationResult.smsResult?.messageId,
+      emailMessageId: notificationResult.emailResult?.messageId,
+      error: notificationResult.smsResult?.error || notificationResult.emailResult?.error
     })
 
     return NextResponse.json({
-      success: smsResult.success,
-      messageId: smsResult.messageId,
-      error: smsResult.error
+      success: notificationResult.success,
+      messageId: notificationResult.messageId,
+      smsResult: notificationResult.smsResult,
+      emailResult: notificationResult.emailResult,
+      error: notificationResult.smsResult?.error || notificationResult.emailResult?.error
     })
 
   } catch (error) {

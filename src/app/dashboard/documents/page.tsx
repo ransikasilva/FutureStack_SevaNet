@@ -79,26 +79,37 @@ function DocumentsContent() {
   ]
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 pb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-10">
+      {/* Professional Header */}
+      <div className="relative bg-gradient-to-r from-government-dark-blue via-blue-700 to-government-dark-blue rounded-3xl p-8 lg:p-12 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-government-gold/10"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-government-gold/10 rounded-full -mr-48 -mt-48"></div>
+        
+        <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Document Management</h1>
-            <p className="text-lg text-gray-600 mt-2">
-              Securely upload and manage your documents for government services
+            <div className="flex items-center mb-4">
+              <div className="bg-white/20 p-2 rounded-xl mr-3">
+                <FileText className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-blue-100 text-sm font-bold uppercase tracking-wide">Secure Document Management</span>
+            </div>
+            <h1 className="text-4xl lg:text-5xl font-black text-white mb-4 leading-tight">
+              Document Wallet
+            </h1>
+            <p className="text-xl text-blue-100 max-w-2xl leading-relaxed">
+              Securely upload and manage your documents for government services with bank-level encryption
             </p>
           </div>
-          <div className="mt-6 sm:mt-0 flex items-center space-x-4">
-            <div className="flex items-center text-sm text-gray-500">
-              <Shield className="h-4 w-4 mr-1" />
-              <span>256-bit encrypted</span>
+          <div className="mt-6 lg:mt-0 flex flex-col space-y-4">
+            <div className="flex items-center bg-white/20 px-4 py-2 rounded-xl backdrop-blur-sm">
+              <Shield className="h-5 w-5 text-white mr-2" />
+              <span className="text-white font-bold">256-bit encrypted</span>
             </div>
             <button
               onClick={() => setShowUpload(true)}
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-government-dark-blue hover:bg-blue-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-government-dark-blue"
+              className="group inline-flex items-center px-8 py-4 bg-white text-government-dark-blue font-black text-lg rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300"
             >
-              <Upload className="mr-2 h-5 w-5" />
+              <Upload className="mr-3 h-6 w-6 group-hover:animate-pulse" />
               Upload Documents
             </button>
           </div>

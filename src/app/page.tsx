@@ -1,9 +1,17 @@
+'use client'
+
 import Link from 'next/link'
+import React from 'react'
 import { Calendar, FileText, Clock, Shield, Star, Building2, Users, CheckCircle, Phone, Mail, ArrowRight, Globe, Zap, Lock } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
-import { ScrollReveal, ScrollStagger, ScaleReveal } from '@/components/ui/ScrollReveal'
+import { ScrollReveal, ScaleReveal } from '@/components/ui/ScrollReveal'
 
 export default function HomePage() {
+  // Ensure page scrolls to top on load
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const features = [
     {
       icon: Calendar,

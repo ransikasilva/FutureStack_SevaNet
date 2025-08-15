@@ -134,6 +134,12 @@ export async function uploadToWallet(data: {
       .single()
 
     console.log('Database insert result:', { documentData, documentError })
+    console.log('Inserted document details:', {
+      document_category: documentCategory,
+      document_type: documentType,
+      is_wallet_document: true,
+      status: 'pending'
+    })
 
     if (documentError) throw documentError
     return documentData
@@ -148,13 +154,53 @@ export async function checkDocumentRequirements(
   requiredDocuments: string[]
 ): Promise<DocumentRequirement[]> {
   try {
-    const { data, error } = await supabase.rpc('check_wallet_documents', {
-      citizen_id_param: citizenId,
-      required_docs: requiredDocuments
-    })
+    console.log('Checking requirements for:', { citizenId, requiredDocuments })
+    
+    // Query documents directly from the database with more flexible matching
+    const { data: documents, error } = await supabase
+      .from('documents')
+      .select('id, document_category, document_type, status')
+      .eq('citizen_id', citizenId)
+      .eq('is_wallet_document', true)
+      .in('status', ['approved', 'pending']) // Include both approved and pending
 
     if (error) throw error
-    return data || []
+
+    console.log('Available wallet documents:', documents)
+
+    // Map required documents to availability
+    const requirements = requiredDocuments.map(requiredDoc => {
+      // Look for exact match first
+      let matchingDoc = documents?.find(doc => 
+        doc.document_category === requiredDoc || 
+        doc.document_type === getCategoryKey(requiredDoc)
+      )
+
+      // If no exact match, try partial matching
+      if (!matchingDoc) {
+        matchingDoc = documents?.find(doc => {
+          const docCategoryKey = getCategoryKey(doc.document_category || '')
+          const requiredDocKey = getCategoryKey(requiredDoc)
+          return docCategoryKey === requiredDocKey
+        })
+      }
+
+      console.log(`Checking "${requiredDoc}":`, {
+        found: !!matchingDoc,
+        matchingDoc: matchingDoc?.document_category,
+        mappedRequired: getCategoryKey(requiredDoc)
+      })
+
+      return {
+        document_type: requiredDoc,
+        available: !!matchingDoc,
+        document_id: matchingDoc?.id
+      }
+    })
+
+    console.log('Final requirements result:', requirements)
+    return requirements
+    
   } catch (error) {
     console.error('Failed to check document requirements:', error)
     return requiredDocuments.map(doc => ({
@@ -239,4 +285,66 @@ export const DOCUMENT_CATEGORIES = {
 
 export const getCategoryLabel = (category: string): string => {
   return DOCUMENT_CATEGORIES[category as keyof typeof DOCUMENT_CATEGORIES] || category
+}
+
+export const getCategoryKey = (label: string): string => {
+  // Find the key that matches the label exactly
+  for (const [key, value] of Object.entries(DOCUMENT_CATEGORIES)) {
+    if (value === label) {
+      return key
+    }
+  }
+  
+  // Try case-insensitive match
+  const lowerLabel = label.toLowerCase()
+  for (const [key, value] of Object.entries(DOCUMENT_CATEGORIES)) {
+    if (value.toLowerCase() === lowerLabel) {
+      return key
+    }
+  }
+  
+  // Try partial matches for common variations
+  if (lowerLabel.includes('birth certificate') || lowerLabel === 'birth certificate') {
+    return 'birth_certificate'
+  }
+  if (lowerLabel.includes('national id') || lowerLabel.includes('nic')) {
+    return 'national_id'
+  }
+  if (lowerLabel.includes('passport')) {
+    return 'passport'
+  }
+  if (lowerLabel.includes('driver') || lowerLabel.includes('license')) {
+    return 'driver_license'
+  }
+  if (lowerLabel.includes('marriage')) {
+    return 'marriage_certificate'
+  }
+  if (lowerLabel.includes('education') || lowerLabel.includes('certificate')) {
+    return 'education_certificate'
+  }
+  if (lowerLabel.includes('medical')) {
+    return 'medical_report'
+  }
+  if (lowerLabel.includes('police')) {
+    return 'police_report'
+  }
+  if (lowerLabel.includes('bank')) {
+    return 'bank_statement'
+  }
+  if (lowerLabel.includes('utility') || lowerLabel.includes('bill')) {
+    return 'utility_bill'
+  }
+  if (lowerLabel.includes('employment') || lowerLabel.includes('work')) {
+    return 'employment_letter'
+  }
+  if (lowerLabel.includes('passport') && lowerLabel.includes('photo')) {
+    return 'photo_passport'
+  }
+  if (lowerLabel.includes('photo') || lowerLabel.includes('id photo')) {
+    return 'photo_id'
+  }
+  
+  // Fallback: normalize to snake_case
+  const normalizedLabel = label.toLowerCase().replace(/[^a-z0-9]/g, '_')
+  return normalizedLabel
 }

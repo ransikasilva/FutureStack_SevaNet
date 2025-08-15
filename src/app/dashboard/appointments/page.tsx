@@ -18,11 +18,13 @@ import {
   Eye,
   Download,
   QrCode,
-  X
+  X,
+  Star
 } from 'lucide-react'
 import { format } from 'date-fns'
 import Link from 'next/link'
 import { QRCodeDisplay, QRCodeThumbnail } from '@/components/appointments/QRCodeDisplay'
+import { FeedbackForm } from '@/components/feedback/FeedbackForm'
 
 function AppointmentsContent() {
   const { user } = useAuthContext()
@@ -31,6 +33,8 @@ function AppointmentsContent() {
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null)
   const [showQRModal, setShowQRModal] = useState(false)
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false)
+  const [feedbackAppointment, setFeedbackAppointment] = useState<any>(null)
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -95,6 +99,21 @@ function AppointmentsContent() {
     setShowQRModal(true)
   }
 
+  const openFeedbackModal = (appointment: any) => {
+    setFeedbackAppointment(appointment)
+    setShowFeedbackModal(true)
+  }
+
+  const closeFeedbackModal = () => {
+    setShowFeedbackModal(false)
+    setFeedbackAppointment(null)
+  }
+
+  const handleFeedbackSuccess = () => {
+    closeFeedbackModal()
+    refetch() // Refresh appointments to update any feedback-related data
+  }
+
   const closeQRModal = () => {
     setSelectedAppointment(null)
     setShowQRModal(false)
@@ -110,65 +129,80 @@ function AppointmentsContent() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 pb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-10">
+      {/* Professional Header */}
+      <div className="relative bg-gradient-to-r from-government-dark-blue via-blue-700 to-government-dark-blue rounded-3xl p-8 lg:p-12 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-government-gold/10"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-government-gold/10 rounded-full -mr-48 -mt-48"></div>
+        
+        <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">My Appointments</h1>
-            <p className="text-lg text-gray-600 mt-2">
-              Manage and track your government service appointments
+            <div className="flex items-center mb-4">
+              <div className="bg-white/20 p-2 rounded-xl mr-3">
+                <Calendar className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-blue-100 text-sm font-bold uppercase tracking-wide">Appointment Management</span>
+            </div>
+            <h1 className="text-4xl lg:text-5xl font-black text-white mb-4 leading-tight">
+              My Appointments
+            </h1>
+            <p className="text-xl text-blue-100 max-w-2xl leading-relaxed">
+              Manage and track your government service appointments with real-time updates
             </p>
           </div>
-          <div className="mt-6 sm:mt-0">
+          <div className="mt-6 lg:mt-0">
             <Link
               href="/dashboard/book"
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-government-dark-blue hover:bg-blue-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-government-dark-blue"
+              className="group inline-flex items-center px-8 py-4 bg-white text-government-dark-blue font-black text-lg rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300"
             >
-              <Calendar className="mr-2 h-5 w-5" />
+              <Calendar className="mr-3 h-6 w-6 group-hover:animate-pulse" />
               Book New Appointment
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Filters and Statistics */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-          <div className="flex flex-wrap gap-6 items-center">
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Filter by Status
-              </label>
-              <select
-                className="w-48 px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-government-dark-blue focus:border-government-dark-blue transition-colors"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-              >
-                <option value="all">All Appointments</option>
-                <option value="pending">Pending Confirmation</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-            
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-600">
-                Showing {filteredAppointments.length} of {appointments.length} appointments
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                {appointments.filter(a => a.status === 'confirmed').length} confirmed • {appointments.filter(a => a.status === 'pending').length} pending
-              </p>
+      {/* Professional Filters and Statistics */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 relative bg-white/95 backdrop-blur-xl rounded-3xl p-8 shadow-lg border border-white/20">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 rounded-3xl"></div>
+          <div className="relative">
+            <div className="flex flex-wrap gap-8 items-center">
+              <div>
+                <label className="block text-lg font-black text-gray-900 mb-3">
+                  Filter by Status
+                </label>
+                <select
+                  className="w-56 px-5 py-4 bg-white border-2 border-blue-200 rounded-xl text-base font-semibold focus:ring-2 focus:ring-government-dark-blue focus:border-government-dark-blue transition-all duration-200 shadow-md hover:shadow-lg"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                  <option value="all">All Appointments</option>
+                  <option value="pending">Pending Confirmation</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <p className="text-lg font-bold text-gray-900">
+                  Showing {filteredAppointments.length} of {appointments.length} appointments
+                </p>
+                <p className="text-sm text-blue-600 mt-1 font-medium">
+                  {appointments.filter(a => a.status === 'confirmed').length} confirmed • {appointments.filter(a => a.status === 'pending').length} pending
+                </p>
+              </div>
             </div>
           </div>
         </div>
         
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">{appointments.length}</div>
-            <div className="text-sm font-medium text-gray-600">Total Appointments</div>
-            <div className="text-xs text-gray-500 mt-1">All time</div>
+        <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl p-8 shadow-lg border border-white/20 hover:shadow-2xl hover:scale-105 transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-indigo-50/30 rounded-3xl"></div>
+          <div className="relative text-center">
+            <div className="text-4xl font-black text-gray-900 mb-2">{appointments.length}</div>
+            <div className="text-lg font-bold text-gray-600">Total Appointments</div>
+            <div className="text-sm text-purple-600 mt-1 font-medium">All time</div>
           </div>
         </div>
       </div>
@@ -315,6 +349,16 @@ function AppointmentsContent() {
                         </button>
                       )}
                       
+                      {appointment.status === 'completed' && (
+                        <button
+                          className="inline-flex items-center justify-center px-4 py-2 border border-green-300 text-green-700 bg-white rounded-lg hover:bg-green-50 transition-colors font-medium"
+                          onClick={() => openFeedbackModal(appointment)}
+                        >
+                          <Star className="h-4 w-4 mr-2" />
+                          Leave Feedback
+                        </button>
+                      )}
+
                       {canCancelAppointment(appointment) && (
                         <button
                           onClick={() => handleCancelAppointment(appointment.id)}
@@ -395,7 +439,7 @@ function AppointmentsContent() {
           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={closeQRModal} />
 
-            <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full sm:p-6">
+            <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl sm:w-full sm:p-8">
               <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button
                   onClick={closeQRModal}
@@ -407,16 +451,16 @@ function AppointmentsContent() {
 
               <div className="sm:flex sm:items-start">
                 <div className="w-full">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                  <h3 className="text-2xl leading-6 font-bold text-gray-900 mb-8 text-center">
                     Appointment Details & QR Code
                   </h3>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Appointment Details */}
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       <div>
-                        <h4 className="font-semibold text-gray-900 mb-2">Appointment Information</h4>
-                        <div className="space-y-2 text-sm">
+                        <h4 className="font-semibold text-gray-900 mb-4 text-lg">Appointment Information</h4>
+                        <div className="space-y-3 text-base">
                           <div className="flex justify-between">
                             <span className="text-gray-600">Service:</span>
                             <span className="font-medium">{selectedAppointment.service?.name}</span>
@@ -474,15 +518,19 @@ function AppointmentsContent() {
                     </div>
 
                     {/* QR Code */}
-                    <div className="flex justify-center lg:justify-end">
+                    <div className="flex flex-col items-center justify-start space-y-4">
+                      <h4 className="font-semibold text-gray-900 text-lg">QR Code</h4>
                       {(selectedAppointment.status === 'confirmed' || selectedAppointment.status === 'pending') ? (
-                        <QRCodeDisplay 
-                          appointmentId={selectedAppointment.id}
-                          size="lg"
-                          showActions={true}
-                        />
+                        <div className="w-full flex justify-center">
+                          <QRCodeDisplay 
+                            appointmentId={selectedAppointment.id}
+                            size="lg"
+                            showActions={true}
+                            className="w-full max-w-md"
+                          />
+                        </div>
                       ) : (
-                        <div className="text-center p-8 bg-gray-50 rounded-lg">
+                        <div className="text-center p-8 bg-gray-50 rounded-lg w-full">
                           <QrCode className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                           <p className="text-gray-600">
                             QR code is only available for confirmed and pending appointments
@@ -492,16 +540,35 @@ function AppointmentsContent() {
                     </div>
                   </div>
 
-                  <div className="mt-6 flex justify-end">
+                  <div className="mt-8 flex justify-end">
                     <button
                       onClick={closeQRModal}
-                      className="btn-secondary"
+                      className="btn-secondary px-6 py-3 text-lg"
                     >
                       Close
                     </button>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Feedback Modal */}
+      {showFeedbackModal && feedbackAppointment && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={closeFeedbackModal} />
+
+            <div className="inline-block align-bottom rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <FeedbackForm
+                appointmentId={feedbackAppointment.id}
+                serviceName={feedbackAppointment.service?.name || 'Unknown Service'}
+                departmentName={feedbackAppointment.service?.department?.name || 'Unknown Department'}
+                onSuccess={handleFeedbackSuccess}
+                onCancel={closeFeedbackModal}
+              />
             </div>
           </div>
         </div>

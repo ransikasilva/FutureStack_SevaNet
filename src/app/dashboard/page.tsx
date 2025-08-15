@@ -41,217 +41,311 @@ function DashboardContent() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header Section */}
-      <div className="bg-white border-b border-gray-200 pb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Welcome back, {user?.profile?.full_name?.split(' ')[0] || 'User'}
+    <div className="space-y-10">
+      {/* Professional Header Section */}
+      <div className="relative bg-gradient-to-r from-government-dark-blue via-blue-700 to-government-dark-blue rounded-3xl p-8 lg:p-12 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-government-gold/10"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-government-gold/10 rounded-full -mr-48 -mt-48"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full -ml-32 -mb-32"></div>
+        
+        <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between">
+          <div className="mb-6 lg:mb-0">
+            <div className="flex items-center mb-4">
+              <div className="bg-white/20 p-2 rounded-xl mr-3">
+                <CheckCircle className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-blue-100 text-sm font-bold uppercase tracking-wide">Government Services Portal</span>
+            </div>
+            <h1 className="text-4xl lg:text-5xl font-black text-white mb-4 leading-tight">
+              Welcome back,
+              <br />
+              <span className="text-government-gold">{user?.profile?.full_name?.split(' ')[0] || 'User'}</span>
             </h1>
-            <p className="text-lg text-gray-600 mt-2">
-              Manage your government services and appointments in one place
+            <p className="text-xl text-blue-100 max-w-2xl leading-relaxed">
+              Manage your government services and appointments through our secure, citizen-first digital platform
             </p>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
             <Link
               href="/dashboard/book"
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-government-dark-blue hover:bg-blue-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-government-dark-blue"
+              className="group inline-flex items-center justify-center px-8 py-4 bg-white text-government-dark-blue font-black text-lg rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300"
             >
-              <Plus className="mr-2 h-5 w-5" />
+              <Plus className="mr-3 h-6 w-6 group-hover:animate-pulse" />
               Book Appointment
+            </Link>
+            <Link
+              href="/dashboard/appointments"
+              className="group inline-flex items-center justify-center px-8 py-4 border-2 border-white/30 text-white font-bold text-lg rounded-2xl hover:bg-white hover:text-government-dark-blue transition-all duration-300"
+            >
+              <Calendar className="mr-3 h-6 w-6" />
+              My Appointments
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Statistics Overview */}
+      {/* Professional Statistics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center">
-            <div className="p-3 bg-blue-100 rounded-xl">
-              <Calendar className="h-6 w-6 text-blue-600" />
+        <div className="group relative bg-white/95 backdrop-blur-xl rounded-2xl p-8 shadow-lg border border-white/20 hover:shadow-2xl hover:scale-105 transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 rounded-2xl"></div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg">
+                <Calendar className="h-7 w-7 text-white" />
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-black text-gray-900">{stats.total}</div>
+                <div className="text-xs text-blue-600 font-bold uppercase tracking-wide">Total</div>
+              </div>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Appointments</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-            </div>
+            <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-700 transition-colors">Total Appointments</h3>
+            <p className="text-sm text-gray-600 mt-1">All your scheduled services</p>
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center">
-            <div className="p-3 bg-yellow-100 rounded-xl">
-              <Clock className="h-6 w-6 text-yellow-600" />
+        <div className="group relative bg-white/95 backdrop-blur-xl rounded-2xl p-8 shadow-lg border border-white/20 hover:shadow-2xl hover:scale-105 transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 to-orange-50/30 rounded-2xl"></div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl shadow-lg">
+                <Clock className="h-7 w-7 text-white" />
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-black text-gray-900">{stats.pending}</div>
+                <div className="text-xs text-amber-600 font-bold uppercase tracking-wide">Pending</div>
+              </div>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Pending</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
-            </div>
+            <h3 className="text-lg font-bold text-gray-900 group-hover:text-amber-700 transition-colors">Pending Review</h3>
+            <p className="text-sm text-gray-600 mt-1">Awaiting confirmation</p>
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center">
-            <div className="p-3 bg-green-100 rounded-xl">
-              <CheckCircle className="h-6 w-6 text-green-600" />
+        <div className="group relative bg-white/95 backdrop-blur-xl rounded-2xl p-8 shadow-lg border border-white/20 hover:shadow-2xl hover:scale-105 transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 to-green-50/30 rounded-2xl"></div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-gradient-to-br from-emerald-500 to-green-500 rounded-2xl shadow-lg">
+                <CheckCircle className="h-7 w-7 text-white" />
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-black text-gray-900">{stats.confirmed}</div>
+                <div className="text-xs text-emerald-600 font-bold uppercase tracking-wide">Confirmed</div>
+              </div>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Confirmed</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.confirmed}</p>
-            </div>
+            <h3 className="text-lg font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">Confirmed</h3>
+            <p className="text-sm text-gray-600 mt-1">Ready for your visit</p>
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center">
-            <div className="p-3 bg-purple-100 rounded-xl">
-              <FileText className="h-6 w-6 text-purple-600" />
+        <div className="group relative bg-white/95 backdrop-blur-xl rounded-2xl p-8 shadow-lg border border-white/20 hover:shadow-2xl hover:scale-105 transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-indigo-50/30 rounded-2xl"></div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-2xl shadow-lg">
+                <FileText className="h-7 w-7 text-white" />
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-black text-gray-900">{stats.completed}</div>
+                <div className="text-xs text-purple-600 font-bold uppercase tracking-wide">Complete</div>
+              </div>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Completed</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.completed}</p>
-            </div>
+            <h3 className="text-lg font-bold text-gray-900 group-hover:text-purple-700 transition-colors">Completed</h3>
+            <p className="text-sm text-gray-600 mt-1">Successfully processed</p>
           </div>
         </div>
       </div>
 
-      {/* Quick Actions Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Premium Quick Actions Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Link
           href="/dashboard/book"
-          className="group bg-white border border-gray-200 rounded-xl p-8 hover:border-government-dark-blue hover:shadow-lg transition-all duration-300"
+          className="group relative bg-white/95 backdrop-blur-xl rounded-3xl p-10 hover:shadow-2xl hover:scale-105 transition-all duration-500 border border-white/20 overflow-hidden"
         >
-          <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-xl group-hover:bg-blue-200 transition-colors mb-6">
-            <Plus className="h-8 w-8 text-blue-600" />
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-blue-50/50"></div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mr-16 -mt-16"></div>
+          
+          <div className="relative">
+            <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 mb-8 shadow-xl">
+              <Plus className="h-10 w-10 text-white group-hover:animate-pulse" />
+            </div>
+            <h3 className="text-2xl font-black text-gray-900 mb-4 group-hover:text-blue-700 transition-colors">
+              Book New Appointment
+            </h3>
+            <p className="text-gray-600 leading-relaxed text-lg">
+              Schedule appointments for various government services including passport, license, and certificate applications through our streamlined booking system.
+            </p>
+            <div className="mt-6 flex items-center text-blue-600 font-bold group-hover:text-blue-800 transition-colors">
+              <span>Get Started</span>
+              <AlertCircle className="ml-2 h-5 w-5 group-hover:translate-x-2 transition-transform" />
+            </div>
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-government-dark-blue transition-colors">
-            Book New Appointment
-          </h3>
-          <p className="text-gray-600 leading-relaxed">
-            Schedule appointments for various government services including passport, license, and certificate applications.
-          </p>
         </Link>
 
         <Link
           href="/dashboard/appointments"
-          className="group bg-white border border-gray-200 rounded-xl p-8 hover:border-government-dark-blue hover:shadow-lg transition-all duration-300"
+          className="group relative bg-white/95 backdrop-blur-xl rounded-3xl p-10 hover:shadow-2xl hover:scale-105 transition-all duration-500 border border-white/20 overflow-hidden"
         >
-          <div className="flex items-center justify-center w-16 h-16 bg-green-100 rounded-xl group-hover:bg-green-200 transition-colors mb-6">
-            <Calendar className="h-8 w-8 text-green-600" />
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 via-green-50/30 to-emerald-50/50"></div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full -mr-16 -mt-16"></div>
+          
+          <div className="relative">
+            <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-emerald-500 to-green-500 rounded-3xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 mb-8 shadow-xl">
+              <Calendar className="h-10 w-10 text-white group-hover:animate-pulse" />
+            </div>
+            <h3 className="text-2xl font-black text-gray-900 mb-4 group-hover:text-emerald-700 transition-colors">
+              My Appointments
+            </h3>
+            <p className="text-gray-600 leading-relaxed text-lg">
+              View and manage all your scheduled appointments. Track status, reschedule, or cancel existing bookings with real-time updates.
+            </p>
+            <div className="mt-6 flex items-center text-emerald-600 font-bold group-hover:text-emerald-800 transition-colors">
+              <span>View All</span>
+              <AlertCircle className="ml-2 h-5 w-5 group-hover:translate-x-2 transition-transform" />
+            </div>
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-government-dark-blue transition-colors">
-            My Appointments
-          </h3>
-          <p className="text-gray-600 leading-relaxed">
-            View and manage all your scheduled appointments. Track status, reschedule, or cancel existing bookings.
-          </p>
         </Link>
 
         <Link
           href="/dashboard/documents"
-          className="group bg-white border border-gray-200 rounded-xl p-8 hover:border-government-dark-blue hover:shadow-lg transition-all duration-300"
+          className="group relative bg-white/95 backdrop-blur-xl rounded-3xl p-10 hover:shadow-2xl hover:scale-105 transition-all duration-500 border border-white/20 overflow-hidden"
         >
-          <div className="flex items-center justify-center w-16 h-16 bg-purple-100 rounded-xl group-hover:bg-purple-200 transition-colors mb-6">
-            <FileText className="h-8 w-8 text-purple-600" />
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 via-indigo-50/30 to-purple-50/50"></div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full -mr-16 -mt-16"></div>
+          
+          <div className="relative">
+            <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-3xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 mb-8 shadow-xl">
+              <FileText className="h-10 w-10 text-white group-hover:animate-pulse" />
+            </div>
+            <h3 className="text-2xl font-black text-gray-900 mb-4 group-hover:text-purple-700 transition-colors">
+              Document Wallet
+            </h3>
+            <p className="text-gray-600 leading-relaxed text-lg">
+              Securely store and manage your documents. Upload required files for faster appointment processing with encrypted storage.
+            </p>
+            <div className="mt-6 flex items-center text-purple-600 font-bold group-hover:text-purple-800 transition-colors">
+              <span>Manage Files</span>
+              <AlertCircle className="ml-2 h-5 w-5 group-hover:translate-x-2 transition-transform" />
+            </div>
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-government-dark-blue transition-colors">
-            Document Wallet
-          </h3>
-          <p className="text-gray-600 leading-relaxed">
-            Securely store and manage your documents. Upload required files for faster appointment processing.
-          </p>
         </Link>
       </div>
 
-      {/* Upcoming Appointments Section */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
-        <div className="px-8 py-6 border-b border-gray-200">
+      {/* Professional Upcoming Appointments Section */}
+      <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-50/50 via-blue-50/30 to-indigo-50/20"></div>
+        
+        <div className="relative px-10 py-8 border-b border-blue-100/50">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Upcoming Appointments</h2>
-              <p className="text-gray-600 mt-1">Your next scheduled government services</p>
+              <div className="flex items-center mb-3">
+                <div className="bg-blue-100 p-2 rounded-xl mr-3">
+                  <Calendar className="h-6 w-6 text-blue-600" />
+                </div>
+                <span className="text-blue-600 text-sm font-bold uppercase tracking-wide">Scheduled Services</span>
+              </div>
+              <h2 className="text-3xl font-black text-gray-900 mb-2">Upcoming Appointments</h2>
+              <p className="text-lg text-gray-600">Your next scheduled government services and meetings</p>
             </div>
             <Link
               href="/dashboard/appointments"
-              className="inline-flex items-center text-government-dark-blue hover:text-blue-800 font-medium"
+              className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 text-government-dark-blue hover:from-blue-100 hover:to-indigo-100 font-bold rounded-2xl border border-blue-200 hover:border-blue-300 transition-all duration-300 hover:scale-105"
             >
-              View all appointments
-              <AlertCircle className="ml-2 h-4 w-4" />
+              View All Appointments
+              <AlertCircle className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
         </div>
         
-        <div className="p-8">
+        <div className="relative p-10">
           {loading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-government-dark-blue mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading your appointments...</p>
+            <div className="text-center py-16">
+              <div className="relative mx-auto w-16 h-16 mb-6">
+                <div className="absolute inset-0 rounded-full border-4 border-blue-200"></div>
+                <div className="absolute inset-0 rounded-full border-4 border-government-dark-blue border-t-transparent animate-spin"></div>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Loading Your Schedule</h3>
+              <p className="text-gray-600">Fetching your upcoming appointments...</p>
             </div>
           ) : upcomingAppointments.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Calendar className="h-12 w-12 text-gray-400" />
+            <div className="text-center py-20">
+              <div className="relative w-32 h-32 mx-auto mb-8">
+                <div className="w-32 h-32 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl flex items-center justify-center shadow-lg">
+                  <Calendar className="h-16 w-16 text-blue-400" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-br from-government-gold to-yellow-500 rounded-full flex items-center justify-center shadow-lg">
+                  <Plus className="h-4 w-4 text-white" />
+                </div>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No upcoming appointments</h3>
-              <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                You don't have any scheduled appointments. Book your first appointment to get started with government services.
+              <h3 className="text-3xl font-black text-gray-900 mb-4">Ready to Get Started?</h3>
+              <p className="text-xl text-gray-600 mb-8 max-w-lg mx-auto leading-relaxed">
+                You don't have any scheduled appointments yet. Book your first government service appointment to experience our streamlined process.
               </p>
               <Link
                 href="/dashboard/book"
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-government-dark-blue hover:bg-blue-800 transition-colors"
+                className="group inline-flex items-center px-10 py-5 bg-gradient-to-r from-government-dark-blue to-blue-700 text-white font-black text-lg rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300"
               >
-                <Plus className="mr-2 h-5 w-5" />
+                <Plus className="mr-3 h-6 w-6 group-hover:animate-pulse" />
                 Book Your First Appointment
+                <AlertCircle className="ml-3 h-6 w-6 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
           ) : (
-            <div className="space-y-4">
-              {upcomingAppointments.map((appointment) => (
+            <div className="space-y-6">
+              {upcomingAppointments.map((appointment, index) => (
                 <div
                   key={appointment.id}
-                  className="flex items-center justify-between p-6 border border-gray-200 rounded-xl hover:border-government-dark-blue hover:shadow-md transition-all duration-300"
+                  className="group relative bg-white/80 backdrop-blur-sm rounded-3xl p-8 border border-blue-100 hover:border-blue-300 hover:shadow-xl hover:scale-102 transition-all duration-300"
                 >
-                  <div className="flex items-center space-x-6">
-                    <div className="p-3 bg-blue-100 rounded-xl">
-                      <Calendar className="h-6 w-6 text-blue-600" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 rounded-3xl"></div>
+                  
+                  <div className="relative flex items-center justify-between">
+                    <div className="flex items-center space-x-6">
+                      <div className="relative">
+                        <div className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+                          <Calendar className="h-8 w-8 text-white" />
+                        </div>
+                        <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-government-gold to-yellow-500 rounded-full flex items-center justify-center text-xs font-black text-white">
+                          {index + 1}
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="text-2xl font-black text-gray-900 mb-2 group-hover:text-blue-700 transition-colors">
+                          {appointment.service?.name}
+                        </h4>
+                        <p className="text-lg text-gray-600 mb-1 font-medium">
+                          {appointment.time_slot && 
+                            format(new Date(appointment.time_slot.start_time), 'EEEE, MMMM d, yyyy at h:mm a')
+                          }
+                        </p>
+                        <p className="text-sm text-blue-600 font-bold">
+                          Reference: {appointment.booking_reference}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-900">
-                        {appointment.service?.name}
-                      </h4>
-                      <p className="text-gray-600 mt-1">
-                        {appointment.time_slot && 
-                          format(new Date(appointment.time_slot.start_time), 'EEEE, MMMM d, yyyy at h:mm a')
-                        }
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        Reference: {appointment.booking_reference}
-                      </p>
+                    <div className="flex items-center space-x-6">
+                      <span className={`inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold ${getStatusColor(appointment.status)} shadow-md`}>
+                        {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                      </span>
+                      <Link
+                        href={`/dashboard/appointments`}
+                        className="group/link inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 text-government-dark-blue hover:from-blue-100 hover:to-indigo-100 font-bold rounded-2xl border border-blue-200 hover:border-blue-300 transition-all duration-300 hover:scale-105"
+                      >
+                        View Details
+                        <AlertCircle className="ml-2 h-5 w-5 group-hover/link:translate-x-1 transition-transform" />
+                      </Link>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${getStatusColor(appointment.status)}`}>
-                      {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                    </span>
-                    <Link
-                      href={`/dashboard/appointments`}
-                      className="text-government-dark-blue hover:text-blue-800 font-medium"
-                    >
-                      View Details →
-                    </Link>
                   </div>
                 </div>
               ))}
               
               {upcomingAppointments.length > 0 && (
-                <div className="pt-6 text-center border-t border-gray-200">
+                <div className="pt-8 text-center border-t border-blue-100">
                   <Link
                     href="/dashboard/appointments"
-                    className="inline-flex items-center text-government-dark-blue hover:text-blue-800 font-medium"
+                    className="group inline-flex items-center px-8 py-4 bg-gradient-to-r from-gray-50 to-blue-50 text-government-dark-blue hover:from-blue-50 hover:to-indigo-50 font-bold rounded-2xl border border-gray-200 hover:border-blue-300 transition-all duration-300 hover:scale-105"
                   >
-                    View all {appointments.length} appointments
-                    <AlertCircle className="ml-2 h-4 w-4" />
+                    View All {appointments.length} Appointments
+                    <AlertCircle className="ml-3 h-6 w-6 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </div>
               )}
