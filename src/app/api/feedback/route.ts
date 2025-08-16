@@ -7,8 +7,8 @@ export async function POST(request: NextRequest) {
     const cookieStore = cookies()
     
     const supabase = createServerClient(
-      'https://ileyyewqhyfclcfdlisg.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlsZXl5ZXdxaHlmY2xjZmRsaXNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5NzAzODUsImV4cCI6MjA3MDU0NjM4NX0.P3ytuf_q8Ua2ah7QA6U6QkV3RLOie6Q4x4dfTh6Zvs4',
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
           get(name: string) {
@@ -134,8 +134,8 @@ export async function GET(request: NextRequest) {
     const cookieStore = cookies()
     
     const supabase = createServerClient(
-      'https://ileyyewqhyfclcfdlisg.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlsZXl5ZXdxaHlmY2xjZmRsaXNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5NzAzODUsImV4cCI6MjA3MDU0NjM4NX0.P3ytuf_q8Ua2ah7QA6U6QkV3RLOie6Q4x4dfTh6Zvs4',
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
           get(name: string) {
@@ -159,7 +159,7 @@ export async function GET(request: NextRequest) {
     // Check user role for access control
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role, department_id')
+      .select('id, role, department_id')
       .eq('user_id', session.user.id)
       .single()
 

@@ -7,8 +7,8 @@ export async function GET(request: NextRequest) {
     const cookieStore = cookies()
     
     const supabase = createServerClient(
-      'https://ileyyewqhyfclcfdlisg.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlsZXl5ZXdxaHlmY2xjZmRsaXNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5NzAzODUsImV4cCI6MjA3MDU0NjM4NX0.P3ytuf_q8Ua2ah7QA6U6QkV3RLOie6Q4x4dfTh6Zvs4',
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
           get(name: string) {
@@ -51,11 +51,19 @@ export async function GET(request: NextRequest) {
         : ''
 
     // 1. Peak Booking Hours
-    const { data: peakHours } = await supabase.rpc('get_peak_hours', {
-      start_date: startDate.toISOString(),
-      end_date: endDate.toISOString(),
-      dept_filter: whereClause
-    }).catch(() => ({ data: [] }))
+    // Try to get peak hours from RPC function, with error handling
+    let peakHours = []
+    try {
+      const { data } = await supabase.rpc('get_peak_hours', {
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
+        dept_filter: whereClause
+      })
+      peakHours = data || []
+    } catch (error) {
+      console.warn('RPC get_peak_hours failed, using fallback:', error)
+      peakHours = []
+    }
 
     // Fallback query for peak hours if RPC doesn't exist
     let peakHoursData = peakHours || []
@@ -103,11 +111,15 @@ export async function GET(request: NextRequest) {
 
     const deptCounts: { [key: string]: { name: string, count: number } } = {}
     departmentalLoad?.forEach(apt => {
-      const dept = apt.services.departments
-      if (!deptCounts[dept.id]) {
+      // Handle the nested departments structure from Supabase
+      const serviceData = apt.services as any
+      const dept = serviceData?.departments
+      if (dept && !deptCounts[dept.id]) {
         deptCounts[dept.id] = { name: dept.name, count: 0 }
       }
-      deptCounts[dept.id].count++
+      if (dept) {
+        deptCounts[dept.id].count++
+      }
     })
 
     const departmentalData = Object.values(deptCounts)

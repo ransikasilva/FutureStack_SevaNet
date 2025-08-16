@@ -12,13 +12,13 @@
 
 ## 📂 Repository Information
 
-**GitHub Repository**: [https://github.com/ransikasilva/SevaNet.git](https://github.com/ransikasilva/SevaNet.git)  
-**Working Branch**: `feature/portal-v1`  
+**GitHub Repository**: [https://github.com/ransikasilva/FutureStack_SevaNet.git](https://github.com/ransikasilva/FutureStack_SevaNet.git)  
+**Working Branch**: `main`  
 **Clone Command**: 
 ```bash
-git clone https://github.com/ransikasilva/SevaNet.git
-cd SevaNet
-git checkout feature/portal-v1
+git clone https://github.com/ransikasilva/FutureStack_SevaNet.git
+cd FutureStack_SevaNet
+# Project is on main branch - ready to use!
 ```
 
 ## 🏗️ System Architecture
@@ -112,9 +112,8 @@ SevaNet consists of two main components:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/ransikasilva/SevaNet.git
-   cd SevaNet
-   git checkout feature/portal-v1
+   git clone https://github.com/ransikasilva/FutureStack_SevaNet.git
+   cd FutureStack_SevaNet
    ```
 
 2. **Environment Setup**
@@ -139,9 +138,8 @@ SevaNet consists of two main components:
 
 1. **Clone and setup repository**
    ```bash
-   git clone https://github.com/ransikasilva/SevaNet.git
-   cd SevaNet
-   git checkout feature/portal-v1
+   git clone https://github.com/ransikasilva/FutureStack_SevaNet.git
+   cd FutureStack_SevaNet
    npm install
    ```
 
@@ -522,7 +520,7 @@ Verify your setup is working correctly:
 - [Docker Documentation](https://docs.docker.com/)
 
 **Issues & Support**
-- Create issues on [GitHub repository](https://github.com/ransikasilva/SevaNet/issues)
+- Create issues on [GitHub repository](https://github.com/ransikasilva/FutureStack_SevaNet/issues)
 - Check troubleshooting section above
 - Review API documentation for endpoint details
 
@@ -535,8 +533,8 @@ Verify your setup is working correctly:
 1. **Via Vercel Dashboard**
    - Go to [vercel.com](https://vercel.com) and sign up with GitHub
    - Click "New Project" → "Import Git Repository"
-   - Enter: `https://github.com/ransikasilva/SevaNet.git`
-   - **Important**: Select branch `feature/portal-v1` (not main)
+   - Enter: `https://github.com/ransikasilva/FutureStack_SevaNet.git`
+   - **Note**: Uses main branch (default)
    - Configure:
      - **Framework**: Next.js
      - **Root Directory**: `./`
@@ -546,9 +544,8 @@ Verify your setup is working correctly:
    ```bash
    npm i -g vercel
    vercel login
-   git clone https://github.com/ransikasilva/SevaNet.git
-   cd SevaNet
-   git checkout feature/portal-v1
+   git clone https://github.com/ransikasilva/FutureStack_SevaNet.git
+   cd FutureStack_SevaNet
    vercel --prod
    ```
 
@@ -556,8 +553,8 @@ Verify your setup is working correctly:
 
 1. Go to [railway.app](https://railway.app) and sign up
 2. Click "New Project" → "Deploy from GitHub repo"
-3. Select: `https://github.com/ransikasilva/SevaNet.git`
-4. Choose branch: `feature/portal-v1`
+3. Select: `https://github.com/ransikasilva/FutureStack_SevaNet.git`
+4. Uses main branch (default)
 5. Set root directory to: `backend`
 6. Railway auto-detects Python and deploys
 
