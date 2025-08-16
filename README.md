@@ -10,6 +10,17 @@
 
 **SevaNet** is a comprehensive Government Services Portal developed for the **Tech-Triathlon Hackathon by Rootcode**. It streamlines how Sri Lankan citizens access government services by eliminating physical queues and providing a seamless digital experience with integrated civic issue reporting.
 
+## 📂 Repository Information
+
+**GitHub Repository**: [https://github.com/ransikasilva/SevaNet.git](https://github.com/ransikasilva/SevaNet.git)  
+**Working Branch**: `feature/portal-v1`  
+**Clone Command**: 
+```bash
+git clone https://github.com/ransikasilva/SevaNet.git
+cd SevaNet
+git checkout feature/portal-v1
+```
+
 ## 🏗️ System Architecture
 
 SevaNet consists of two main components:
@@ -53,7 +64,7 @@ SevaNet consists of two main components:
 
 4. **✅ Automated Notification System**
    - SMS notifications via Text.lk integration
-   - Email confirmations and reminders via Resend
+   - Email confirmations and reminders via Gmail SMTP
    - 24-hour appointment reminders with document checklists
    - Status update notifications
 
@@ -95,14 +106,15 @@ SevaNet consists of two main components:
 - **Supabase** account
 - **Google Gemini API** key (for AI features)
 - **Text.lk** account (for SMS)
-- **Resend** account (for emails)
+- **Gmail account** with App Password (for emails)
 
 ### Option 1: Docker Setup (Recommended)
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourteam/SevaNet.git
+   git clone https://github.com/ransikasilva/SevaNet.git
    cd SevaNet
+   git checkout feature/portal-v1
    ```
 
 2. **Environment Setup**
@@ -125,8 +137,11 @@ SevaNet consists of two main components:
 
 #### **Setup Frontend**
 
-1. **Install dependencies**
+1. **Clone and setup repository**
    ```bash
+   git clone https://github.com/ransikasilva/SevaNet.git
+   cd SevaNet
+   git checkout feature/portal-v1
    npm install
    ```
 
@@ -191,7 +206,16 @@ NEXTAUTH_URL=http://localhost:3000
 TEXT_LK_API_TOKEN=your_text_lk_api_token
 TEXT_LK_SENDER_ID=TextLKDemo
 
-RESEND_API_KEY=your_resend_api_key
+# Email Configuration (Gmail SMTP)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
+SMTP_FROM=SevaNet <your_email@gmail.com>
+SMTP_SECURE=false
+
+# Cron Job Configuration
+CRON_SECRET=your_cron_secret
 
 # Google Gemini AI (for backend)
 GOOGLE_API_KEY=your_google_gemini_api_key
@@ -498,9 +522,77 @@ Verify your setup is working correctly:
 - [Docker Documentation](https://docs.docker.com/)
 
 **Issues & Support**
-- Create issues on GitHub repository
+- Create issues on [GitHub repository](https://github.com/ransikasilva/SevaNet/issues)
 - Check troubleshooting section above
 - Review API documentation for endpoint details
+
+---
+
+## 🚀 Deployment Guide
+
+### **Quick Deploy to Vercel (Frontend)**
+
+1. **Via Vercel Dashboard**
+   - Go to [vercel.com](https://vercel.com) and sign up with GitHub
+   - Click "New Project" → "Import Git Repository"
+   - Enter: `https://github.com/ransikasilva/SevaNet.git`
+   - **Important**: Select branch `feature/portal-v1` (not main)
+   - Configure:
+     - **Framework**: Next.js
+     - **Root Directory**: `./`
+     - **Build Command**: `npm run build`
+
+2. **Via Vercel CLI**
+   ```bash
+   npm i -g vercel
+   vercel login
+   git clone https://github.com/ransikasilva/SevaNet.git
+   cd SevaNet
+   git checkout feature/portal-v1
+   vercel --prod
+   ```
+
+### **Deploy Backend to Railway**
+
+1. Go to [railway.app](https://railway.app) and sign up
+2. Click "New Project" → "Deploy from GitHub repo"
+3. Select: `https://github.com/ransikasilva/SevaNet.git`
+4. Choose branch: `feature/portal-v1`
+5. Set root directory to: `backend`
+6. Railway auto-detects Python and deploys
+
+### **Environment Variables**
+
+Set these in your deployment platform:
+
+**Frontend (Vercel)**:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+TEXT_LK_API_TOKEN=your-text-lk-token
+TEXT_LK_SENDER_ID=TextLKDemo
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-gmail-app-password
+SMTP_FROM=SevaNet <your-email@gmail.com>
+SMTP_SECURE=false
+CRON_SECRET=your-cron-secret
+NEXTAUTH_SECRET=your-nextauth-secret
+NEXTAUTH_URL=https://your-app.vercel.app
+NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
+DATABASE_URL=your-database-url
+POSTGRES_PASSWORD=your-postgres-password
+```
+
+**Backend (Railway)**:
+```env
+GOOGLE_API_KEY=your-gemini-key
+SUPABASE_URL=your-supabase-url
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
 
 ---
 
