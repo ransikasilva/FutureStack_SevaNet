@@ -316,3 +316,199 @@ CREATE POLICY "Users can view own notifications" ON notifications
             SELECT id FROM profiles WHERE user_id = auth.uid()
         )
     );
+
+-- Function to generate issue reference
+CREATE OR REPLACE FUNCTION generate_issue_reference()
+RETURNS TEXT AS $$
+DECLARE
+    chars TEXT := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    result TEXT := 'ISS-';
+    i INTEGER;
+BEGIN
+    FOR i IN 1..8 LOOP
+        result := result || substr(chars, floor(random() * length(chars) + 1)::integer, 1);
+    END LOOP;
+    RETURN result;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Issues table for civic issue reporting
+CREATE TABLE issues (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES profiles(id),
+    category VARCHAR(50) NOT NULL CHECK (category IN ('roads', 'electricity', 'water', 'waste', 'safety', 'health', 'environment', 'infrastructure')),
+    title VARCHAR(200),
+    description TEXT NOT NULL,
+    location VARCHAR(255) NOT NULL,
+    image_url VARCHAR(500),
+    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'under_review', 'assigned', 'in_progress', 'resolved', 'closed')),
+    severity_level INTEGER DEFAULT 1 CHECK (severity_level IN (1, 2, 3, 4)),
+    assigned_authority_id UUID REFERENCES departments(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    latitude NUMERIC(10,8),
+    longitude NUMERIC(11,8),
+    booking_reference VARCHAR(12) UNIQUE DEFAULT generate_issue_reference(),
+    estimated_completion_date TIMESTAMP WITH TIME ZONE,
+    actual_completion_date TIMESTAMP WITH TIME ZONE,
+    priority_level INTEGER DEFAULT 2 CHECK (priority_level IN (1, 2, 3, 4, 5)),
+    officer_assigned_id UUID REFERENCES profiles(id),
+    resolution_notes TEXT,
+    citizen_satisfaction_rating INTEGER CHECK (citizen_satisfaction_rating >= 1 AND citizen_satisfaction_rating <= 5)
+);
+
+-- Issue updates tracking table
+CREATE TABLE issue_updates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    issue_id UUID NOT NULL REFERENCES issues(id) ON DELETE CASCADE,
+    updated_by_user_id UUID NOT NULL REFERENCES profiles(id),
+    previous_status VARCHAR(20),
+    new_status VARCHAR(20) NOT NULL,
+    update_type VARCHAR(20) DEFAULT 'status_change' CHECK (update_type IN ('status_change', 'comment', 'assignment', 'completion', 'escalation')),
+    comment TEXT,
+    is_public BOOLEAN DEFAULT true,
+    attachments JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Issue attachments table
+CREATE TABLE issue_attachments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    issue_id UUID NOT NULL REFERENCES issues(id) ON DELETE CASCADE,
+    uploaded_by_user_id UUID NOT NULL REFERENCES profiles(id),
+    file_name VARCHAR(255) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    file_type VARCHAR(50) NOT NULL,
+    file_size INTEGER,
+    attachment_type VARCHAR(50) DEFAULT 'evidence' CHECK (attachment_type IN ('evidence', 'before_photo', 'after_photo', 'document', 'receipt')),
+    description TEXT,
+    is_primary BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Performance indexes for issues
+CREATE INDEX idx_issues_user_id ON issues(user_id);
+CREATE INDEX idx_issues_category ON issues(category);
+CREATE INDEX idx_issues_status ON issues(status);
+CREATE INDEX idx_issues_created_at ON issues(created_at);
+CREATE INDEX idx_issues_location ON issues(location);
+CREATE INDEX idx_issues_coordinates ON issues(latitude, longitude) WHERE latitude IS NOT NULL AND longitude IS NOT NULL;
+CREATE INDEX idx_issues_priority ON issues(priority_level);
+CREATE INDEX idx_issues_officer_assigned ON issues(officer_assigned_id);
+CREATE INDEX idx_issues_completion_date ON issues(actual_completion_date);
+
+-- Analytics indexes
+CREATE INDEX idx_issues_analytics_date ON issues(created_at, category, status);
+CREATE INDEX idx_issues_analytics_location ON issues(latitude, longitude, created_at) WHERE latitude IS NOT NULL AND longitude IS NOT NULL;
+CREATE INDEX idx_issues_analytics_resolution ON issues(actual_completion_date, estimated_completion_date) WHERE actual_completion_date IS NOT NULL;
+CREATE INDEX idx_issues_analytics_satisfaction ON issues(citizen_satisfaction_rating, category) WHERE citizen_satisfaction_rating IS NOT NULL;
+
+-- Issue updates indexes
+CREATE INDEX idx_issue_updates_issue_id ON issue_updates(issue_id);
+CREATE INDEX idx_issue_updates_created_at ON issue_updates(created_at);
+
+-- Issue attachments indexes
+CREATE INDEX idx_issue_attachments_issue_id ON issue_attachments(issue_id);
+
+-- Materialized view for heatmap data
+CREATE MATERIALIZED VIEW issue_heatmap_data AS
+SELECT 
+    ROUND(latitude::numeric, 3) as lat_rounded,
+    ROUND(longitude::numeric, 3) as lng_rounded,
+    category,
+    status,
+    COUNT(*) as issue_density,
+    AVG(severity_level) as avg_severity,
+    COUNT(CASE WHEN status = 'resolved' THEN 1 END) as resolved_count,
+    COUNT(CASE WHEN severity_level >= 3 THEN 1 END) as critical_count,
+    MIN(created_at) as first_reported,
+    MAX(created_at) as last_reported
+FROM issues 
+WHERE latitude IS NOT NULL 
+    AND longitude IS NOT NULL 
+    AND created_at >= (NOW() - INTERVAL '1 year')
+GROUP BY ROUND(latitude::numeric, 3), ROUND(longitude::numeric, 3), category, status
+HAVING COUNT(*) > 0
+ORDER BY COUNT(*) DESC;
+
+-- Comprehensive analytics materialized view
+CREATE MATERIALIZED VIEW issue_analytics_comprehensive AS
+SELECT 
+    DATE_TRUNC('day', i.created_at) as date,
+    DATE_TRUNC('week', i.created_at) as week,
+    DATE_TRUNC('month', i.created_at) as month,
+    EXTRACT(hour FROM i.created_at) as hour_of_day,
+    TO_CHAR(i.created_at, 'Day') as day_of_week,
+    i.category,
+    i.status,
+    i.severity_level,
+    i.priority_level,
+    CASE WHEN i.latitude IS NOT NULL AND i.longitude IS NOT NULL 
+         THEN CONCAT(ROUND(i.latitude::numeric, 2), ',', ROUND(i.longitude::numeric, 2))
+         ELSE NULL END as location_grid,
+    d.name as assigned_department,
+    COUNT(*) as issue_count,
+    COUNT(CASE WHEN i.status = 'resolved' THEN 1 END) as resolved_count,
+    COUNT(CASE WHEN i.severity_level >= 3 THEN 1 END) as critical_high_count,
+    AVG(CASE WHEN i.actual_completion_date IS NOT NULL 
+             THEN EXTRACT(epoch FROM i.actual_completion_date - i.created_at) / 3600 END) as avg_resolution_time_hours,
+    AVG(CASE WHEN i.actual_completion_date IS NOT NULL AND i.estimated_completion_date IS NOT NULL 
+             THEN EXTRACT(epoch FROM i.actual_completion_date - i.estimated_completion_date) / 3600 END) as avg_sla_variance_hours,
+    AVG(i.citizen_satisfaction_rating) as avg_satisfaction_rating,
+    COUNT(CASE WHEN i.citizen_satisfaction_rating >= 4 THEN 1 END) as high_satisfaction_count,
+    COUNT(DISTINCT i.officer_assigned_id) as officers_involved,
+    AVG(CASE WHEN i.officer_assigned_id IS NOT NULL AND i.actual_completion_date IS NOT NULL 
+             THEN EXTRACT(epoch FROM i.actual_completion_date - i.created_at) / 3600 END) as avg_officer_resolution_time
+FROM issues i
+LEFT JOIN departments d ON i.assigned_authority_id = d.id
+WHERE i.created_at >= (NOW() - INTERVAL '2 years')
+GROUP BY DATE_TRUNC('day', i.created_at), DATE_TRUNC('week', i.created_at), DATE_TRUNC('month', i.created_at),
+         EXTRACT(hour FROM i.created_at), TO_CHAR(i.created_at, 'Day'), i.category, i.status, 
+         i.severity_level, i.priority_level, 
+         CASE WHEN i.latitude IS NOT NULL AND i.longitude IS NOT NULL 
+              THEN CONCAT(ROUND(i.latitude::numeric, 2), ',', ROUND(i.longitude::numeric, 2))
+              ELSE NULL END, d.name
+ORDER BY DATE_TRUNC('day', i.created_at) DESC;
+
+-- Triggers for issues
+CREATE TRIGGER generate_issue_reference_trigger
+    BEFORE INSERT ON issues
+    FOR EACH ROW EXECUTE FUNCTION generate_issue_reference();
+
+CREATE TRIGGER update_issues_updated_at
+    BEFORE UPDATE ON issues
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- RLS Policies for issues
+ALTER TABLE issues ENABLE ROW LEVEL SECURITY;
+ALTER TABLE issue_updates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE issue_attachments ENABLE ROW LEVEL SECURITY;
+
+-- Citizens can view their own issues
+CREATE POLICY "Citizens view own issues" ON issues
+    FOR SELECT USING (
+        user_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
+    );
+
+-- Citizens can create issues
+CREATE POLICY "Citizens can create issues" ON issues
+    FOR INSERT WITH CHECK (
+        user_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
+    );
+
+-- Officers can view issues assigned to their department
+CREATE POLICY "Officers view department issues" ON issues
+    FOR SELECT USING (
+        assigned_authority_id IN (
+            SELECT p.department_id FROM profiles p 
+            WHERE p.user_id = auth.uid() AND p.role = 'officer'
+        )
+    );
+
+-- Admins can view all issues
+CREATE POLICY "Admins view all issues" ON issues
+    FOR ALL USING (
+        auth.uid() IN (
+            SELECT user_id FROM profiles WHERE role = 'admin'
+        )
+    );

@@ -273,7 +273,7 @@ export const DOCUMENT_CATEGORIES = {
   'driver_license': 'Driver License',
   'marriage_certificate': 'Marriage Certificate',
   'education_certificate': 'Education Certificate',
-  'medical_report': 'Medical Report',
+  'medical_report': 'Medical Report / Hospital Certificate',
   'police_report': 'Police Report',
   'bank_statement': 'Bank Statement',
   'utility_bill': 'Utility Bill',
@@ -322,7 +322,7 @@ export const getCategoryKey = (label: string): string => {
   if (lowerLabel.includes('education') || lowerLabel.includes('certificate')) {
     return 'education_certificate'
   }
-  if (lowerLabel.includes('medical')) {
+  if (lowerLabel.includes('medical') || lowerLabel.includes('hospital')) {
     return 'medical_report'
   }
   if (lowerLabel.includes('police')) {

@@ -1,6 +1,3 @@
--- Update check_wallet_documents function to include pending status documents
--- This allows newly uploaded documents to be recognized immediately
-
 CREATE OR REPLACE FUNCTION check_wallet_documents(
     citizen_id_param UUID,
     required_docs TEXT[]
