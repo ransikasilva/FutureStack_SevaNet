@@ -79,7 +79,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
       
       // Redirect to login after successful registration
       setTimeout(() => {
-        router.push('/auth/login?message=Please check your email to verify your account')
+        router.push('/auth/login?message=verification_required')
       }, 2000)
     } catch (err: any) {
       setError(err.message || 'Failed to create account')
@@ -91,9 +91,14 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
   if (success) {
     return (
       <div className="text-center">
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4">
-          <h3 className="font-medium">Account created successfully!</h3>
-          <p className="text-sm mt-1">Please check your email to verify your account.</p>
+        <div className="bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-xl mb-4">
+          <h3 className="font-semibold text-lg mb-2">Account Created Successfully! 🎉</h3>
+          <p className="text-sm">
+            We've sent a verification email to <strong>{formData.email}</strong>
+          </p>
+          <p className="text-sm mt-1">
+            Please check your email and click the verification link to activate your account.
+          </p>
         </div>
         <p className="text-sm text-gray-600">
           Redirecting to login page...

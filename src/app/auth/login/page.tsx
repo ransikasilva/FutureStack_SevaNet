@@ -1,14 +1,14 @@
-import { Metadata } from 'next'
+'use client'
+
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { Logo } from '@/components/ui/Logo'
-
-export const metadata: Metadata = {
-  title: 'Sign In - SevaNet',
-  description: 'Sign in to your SevaNet account to book government service appointments.',
-}
+import { Mail, CheckCircle } from 'lucide-react'
 
 export default function LoginPage() {
+  const searchParams = useSearchParams()
+  const message = searchParams?.get('message')
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="min-h-screen flex">
@@ -62,6 +62,36 @@ export default function LoginPage() {
             </div>
 
             <div>
+              {message && (
+                <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
+                  <div className="flex items-start space-x-3">
+                    <Mail className="h-6 w-6 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                        Check Your Email for Verification
+                      </h3>
+                      <p className="text-blue-800 mb-3">
+                        We've sent a verification link to your email address. Please check your email and click the verification link to activate your account.
+                      </p>
+                      <div className="space-y-2 text-sm text-blue-700">
+                        <div className="flex items-center space-x-2">
+                          <CheckCircle className="h-4 w-4" />
+                          <span>Check your inbox and spam/junk folder</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <CheckCircle className="h-4 w-4" />
+                          <span>Click the verification link in the email</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <CheckCircle className="h-4 w-4" />
+                          <span>Return here to sign in after verification</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div className="bg-white py-8 px-8 shadow-xl rounded-xl border border-gray-200">
                 <LoginForm />
               </div>
