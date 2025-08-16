@@ -32,19 +32,76 @@ export function IssueReportForm({ onSuccess, onClose }: IssueReportFormProps) {
   const [analyzingImage, setAnalyzingImage] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [dragOver, setDragOver] = useState(false)
 
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      setSelectedImage(file)
-      setError(null)
-      
-      // Create preview
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setImagePreview(e.target?.result as string)
-      }
-      reader.readAsDataURL(file)
+      processSelectedFile(file)
+    }
+  }
+
+  const processSelectedFile = (file: File) => {
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      setError('Please upload a valid image file (JPG, PNG, GIF, or WebP)')
+      return
+    }
+
+    // Validate file size (10MB limit)
+    const maxSize = 10 * 1024 * 1024
+    if (file.size > maxSize) {
+      setError('File size must be less than 10MB')
+      return
+    }
+
+    setSelectedImage(file)
+    setError(null)
+    
+    // Create preview
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setImagePreview(e.target?.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOver(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOver(false)
+    
+    const files = e.dataTransfer.files
+    if (files.length > 0) {
+      processSelectedFile(files[0])
+    }
+  }
+
+  const openFileDialog = () => {
+    fileInputRef.current?.click()
+  }
+
+  const clearImage = () => {
+    setSelectedImage(null)
+    setImagePreview(null)
+    setAIAnalysis(null)
+    setError(null)
+    // Reset the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
     }
   }
 
@@ -234,60 +291,80 @@ export function IssueReportForm({ onSuccess, onClose }: IssueReportFormProps) {
             Upload Issue Photo
           </h3>
           
-          <div className="space-y-4">
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-government-dark-blue transition-colors">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageSelect}
-                className="hidden"
-              />
-              
-              {imagePreview ? (
-                <div className="space-y-4">
-                  <img
-                    src={imagePreview}
-                    alt="Selected issue"
-                    className="max-h-64 mx-auto rounded-lg shadow-md"
-                  />
-                  <div className="flex justify-center space-x-4">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="px-4 py-2 text-government-dark-blue bg-blue-50 rounded-lg hover:bg-blue-100 font-medium"
-                    >
-                      Change Photo
-                    </button>
-                    {selectedImage && !analyzingImage && (
-                      <button
-                        type="button"
-                        onClick={handleAnalyzeImage}
-                        className="inline-flex items-center px-4 py-2 bg-government-dark-blue text-white rounded-lg hover:bg-blue-800 font-medium"
-                      >
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        Analyze with AI
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <Upload className="h-12 w-12 text-gray-400 mx-auto" />
-                  <div>
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="text-government-dark-blue font-medium hover:text-blue-800"
-                    >
-                      Click to upload
-                    </button>
-                    <p className="text-gray-500 text-sm">or drag and drop</p>
-                  </div>
-                  <p className="text-xs text-gray-400">PNG, JPG up to 10MB</p>
-                </div>
-              )}
-            </div>
+                     <div className="space-y-4">
+             <div 
+               className={`border-2 border-dashed rounded-xl p-6 text-center transition-all duration-200 cursor-pointer ${
+                 dragOver 
+                   ? 'border-government-dark-blue bg-blue-50 border-solid' 
+                   : imagePreview 
+                     ? 'border-green-300 bg-green-50/30' 
+                     : 'border-gray-300 hover:border-government-dark-blue hover:bg-blue-50/30'
+               }`}
+               onDragOver={handleDragOver}
+               onDragLeave={handleDragLeave}
+               onDrop={handleDrop}
+               onClick={!imagePreview ? openFileDialog : undefined}
+             >
+               <input
+                 ref={fileInputRef}
+                 type="file"
+                 accept="image/*"
+                 onChange={handleImageSelect}
+                 className="hidden"
+               />
+               
+               {imagePreview ? (
+                 <div className="space-y-4">
+                   <img
+                     src={imagePreview}
+                     alt="Selected issue"
+                     className="max-h-64 mx-auto rounded-lg shadow-md"
+                   />
+                   <div className="flex justify-center space-x-4">
+                     <button
+                       type="button"
+                       onClick={clearImage}
+                       className="px-4 py-2 text-government-dark-blue bg-blue-50 rounded-lg hover:bg-blue-100 font-medium transition-colors"
+                     >
+                       Change Photo
+                     </button>
+                     {selectedImage && !analyzingImage && (
+                       <button
+                         type="button"
+                         onClick={handleAnalyzeImage}
+                         className="inline-flex items-center px-4 py-2 bg-government-dark-blue text-white rounded-lg hover:bg-blue-800 font-medium transition-colors"
+                       >
+                         <Sparkles className="h-4 w-4 mr-2" />
+                         Analyze with AI
+                       </button>
+                     )}
+                   </div>
+                 </div>
+               ) : (
+                 <div className="space-y-4">
+                   {dragOver ? (
+                     <div className="space-y-3">
+                       <Upload className="h-16 w-16 text-government-dark-blue mx-auto animate-bounce" />
+                       <div>
+                         <p className="text-government-dark-blue font-bold text-lg">Drop your image here</p>
+                         <p className="text-blue-600 text-sm">Release to upload</p>
+                       </div>
+                     </div>
+                   ) : (
+                     <>
+                       <Upload className="h-12 w-12 text-gray-400 mx-auto transition-colors group-hover:text-government-dark-blue" />
+                       <div>
+                         <p className="text-government-dark-blue font-medium hover:text-blue-800 transition-colors">
+                           Click to upload an image
+                         </p>
+                         <p className="text-gray-500 text-sm">or drag and drop</p>
+                       </div>
+                       <p className="text-xs text-gray-400">PNG, JPG, GIF, WebP up to 10MB</p>
+                     </>
+                   )}
+                 </div>
+               )}
+             </div>
 
             {analyzingImage && (
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
