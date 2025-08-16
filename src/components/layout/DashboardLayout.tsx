@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+import Link from 'next/link'
 import { useAuthContext } from '@/components/auth/AuthProvider'
 import { signOut } from '@/lib/auth'
 import { Logo } from '@/components/ui/Logo'
@@ -18,7 +19,9 @@ import {
   Clock,
   UserCheck,
   FolderOpen,
-  Home
+  Home,
+  MapPin,
+  AlertTriangle
 } from 'lucide-react'
 
 interface DashboardLayoutProps {
@@ -43,21 +46,35 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   // Role-based navigation
   const getNavigationForRole = () => {
     const role = user?.profile?.role
+    const isAuthorityOfficer = user?.profile?.authority_id
     
     switch (role) {
       case 'officer':
-        return [
-          { name: 'Dashboard', href: '/officer', icon: Home },
-          { name: 'Appointments', href: '/officer/appointments', icon: Calendar },
-          { name: 'Schedule', href: '/officer/schedule', icon: Clock },
-          { name: 'Documents', href: '/officer/documents', icon: FileText },
-          { name: 'Profile', href: '/dashboard/profile', icon: User },
-        ]
+        if (isAuthorityOfficer) {
+          // Authority officers get simplified navigation
+          return [
+            { name: 'Dashboard', href: '/authority', icon: Home },
+            { name: 'All Issues', href: '/authority/issues', icon: AlertTriangle },
+            { name: 'Issues Map', href: '/authority/map', icon: MapPin },
+            { name: 'Profile', href: '/dashboard/profile', icon: User },
+          ]
+        } else {
+          // Department officers get full navigation
+          return [
+            { name: 'Dashboard', href: '/officer', icon: Home },
+            { name: 'Appointments', href: '/officer/appointments', icon: Calendar },
+            { name: 'Issues', href: '/officer/issues', icon: AlertTriangle },
+            { name: 'Schedule', href: '/officer/schedule', icon: Clock },
+            { name: 'Documents', href: '/officer/documents', icon: FileText },
+            { name: 'Profile', href: '/dashboard/profile', icon: User },
+          ]
+        }
       
       case 'admin':
         return [
           { name: 'Dashboard', href: '/admin', icon: Home },
           { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+          { name: 'Issues', href: '/admin/issues', icon: AlertTriangle },
           { name: 'Services', href: '/admin/services', icon: Settings },
           { name: 'Officers', href: '/admin/officers', icon: UserCheck },
           { name: 'Profile', href: '/dashboard/profile', icon: User },
@@ -68,6 +85,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           { name: 'Dashboard', href: '/dashboard', icon: Home },
           { name: 'Book Appointment', href: '/dashboard/book', icon: Calendar },
           { name: 'My Appointments', href: '/dashboard/appointments', icon: FileText },
+          { name: 'Report Issues', href: '/dashboard/issues', icon: AlertTriangle },
+          { name: 'Issues Map', href: '/dashboard/map', icon: MapPin },
           { name: 'Documents', href: '/dashboard/documents', icon: FolderOpen },
           { name: 'Profile', href: '/dashboard/profile', icon: User },
         ]
@@ -77,7 +96,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigation = getNavigationForRole()
 
   const isCurrentPage = (href: string) => {
-    return pathname === href || (href !== '/dashboard' && href !== '/officer' && href !== '/admin' && pathname.startsWith(href))
+    // Handle exact matches first
+    if (pathname === href) return true
+    
+    // Handle dashboard routes - avoid conflicts
+    if (href === '/dashboard' || href === '/officer' || href === '/admin' || href === '/authority') {
+      return pathname === href
+    }
+    
+    // Handle sub-routes
+    return pathname.startsWith(href)
   }
 
   return (
@@ -124,13 +152,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 const current = isCurrentPage(item.href)
                 return (
                   <li key={item.name}>
-                    <a
+                    <Link
                       href={item.href}
                       className={`group flex items-center px-4 py-3.5 text-sm font-semibold rounded-xl transition-all duration-300 ${
                         current 
                           ? 'bg-gradient-to-r from-government-dark-blue to-blue-700 text-white shadow-lg shadow-blue-500/25 scale-105' 
                           : 'text-gray-700 hover:text-government-dark-blue hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50/50 hover:shadow-md hover:scale-105'
                       }`}
+                      onClick={() => setSidebarOpen(false)}
                     >
                       <div className={`mr-3 p-1.5 rounded-lg ${current ? 'bg-white/20' : 'bg-blue-100 group-hover:bg-blue-200'} transition-all duration-300`}>
                         <item.icon className={`h-4 w-4 ${
@@ -138,7 +167,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         }`} />
                       </div>
                       {item.name}
-                    </a>
+                    </Link>
                   </li>
                 )
               })}
@@ -177,7 +206,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 const current = isCurrentPage(item.href)
                 return (
                   <li key={item.name}>
-                    <a
+                    <Link
                       href={item.href}
                       className={`group flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-200 ${
                         current 
@@ -191,7 +220,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         }`} />
                       </div>
                       {item.name}
-                    </a>
+                    </Link>
                   </li>
                 )
               })}

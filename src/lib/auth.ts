@@ -11,6 +11,7 @@ export interface UserProfile {
   date_of_birth?: string
   role: 'citizen' | 'officer' | 'admin'
   department_id?: string
+  authority_id?: string
   is_verified: boolean
   created_at: string
   updated_at: string

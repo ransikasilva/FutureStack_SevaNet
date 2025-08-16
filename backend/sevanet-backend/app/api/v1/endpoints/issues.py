@@ -1,5 +1,6 @@
 from typing import Optional
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from pydantic import BaseModel
 import uuid
 import json
 
@@ -9,6 +10,21 @@ from app.services.supabase_client import supabase_client
 from app.services.location_service import location_service
 
 router = APIRouter()
+
+# Pydantic model for user creation
+class CreateAuthorityOfficerRequest(BaseModel):
+    email: str
+    full_name: str
+    nic: str
+    authority_id: str
+    phone: Optional[str] = None
+
+# Pydantic models for request validation
+class NearbyIssuesRequest(BaseModel):
+    latitude: float
+    longitude: float
+    radius_km: float = 10
+    limit: int = 100
 
 # Mock data for categories
 MOCK_CATEGORIES = [
@@ -309,6 +325,52 @@ async def get_authorities(category: Optional[str] = None):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch authorities: {str(e)}")
 
+@router.post("/create-authority-officer", response_model=dict)
+async def create_authority_officer(request: CreateAuthorityOfficerRequest):
+    """
+    Create or update a user as an authority officer
+    """
+    try:
+        if supabase_client.is_available:
+            # First check if user exists by email
+            existing_profiles = await supabase_issues.client.table('profiles').select('*').eq('nic', request.nic).execute()
+            
+            profile_data = {
+                'full_name': request.full_name,
+                'nic': request.nic,
+                'phone': request.phone,
+                'role': 'officer',
+                'authority_id': request.authority_id,
+                'department_id': None,  # Authority officers don't have department_id
+                'is_verified': True
+            }
+            
+            if existing_profiles.data:
+                # Update existing profile
+                result = await supabase_issues.client.table('profiles').update(profile_data).eq('nic', request.nic).execute()
+                return {
+                    "success": True,
+                    "message": f"Updated existing user {request.email} as authority officer",
+                    "profile": result.data[0] if result.data else None
+                }
+            else:
+                # Check if we can find by email in auth.users (we need user_id)
+                # For now, we'll create without user_id and let the system handle it on login
+                result = await supabase_issues.client.table('profiles').insert(profile_data).execute()
+                return {
+                    "success": True,
+                    "message": f"Created authority officer profile for {request.email}",
+                    "profile": result.data[0] if result.data else None
+                }
+        else:
+            return {
+                "success": False,
+                "message": "Database not available - mock mode"
+            }
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create authority officer: {str(e)}")
+
 @router.post("/{issue_id}/analyze", response_model=dict)
 async def analyze_issue(issue_id: str):
     """
@@ -350,52 +412,22 @@ async def analyze_issue(issue_id: str):
 @router.get("/{issue_id}/status", response_model=dict)
 async def get_issue_status(issue_id: str):
     """
-    Get detailed status of a specific issue (DUMMY IMPLEMENTATION)
+    Get detailed status of a specific issue using real database data
     """
     try:
-        mock_status = {
-            "issue_id": issue_id,
-            "current_status": "in_progress",
-            "status_history": [
-                {
-                    "status": "pending",
-                    "timestamp": "2025-01-10T14:20:00Z",
-                    "note": "Issue reported by citizen"
-                },
-                {
-                    "status": "under_review", 
-                    "timestamp": "2025-01-10T16:45:00Z",
-                    "note": "Assigned to Road Development Authority for review"
-                },
-                {
-                    "status": "assigned",
-                    "timestamp": "2025-01-11T09:15:00Z", 
-                    "note": "Field inspection scheduled"
-                },
-                {
-                    "status": "in_progress",
-                    "timestamp": "2025-01-11T14:30:00Z",
-                    "note": "Repair work has begun"
-                }
-            ],
-            "assigned_officer": {
-                "name": "Engineer Kamal Silva",
-                "department": "Road Development Authority",
-                "contact": "+94-77-1234567"
-            },
-            "estimated_completion": "2025-01-15T17:00:00Z",
-            "progress_percentage": 65,
-            "updates": [
-                "Temporary filling completed",
-                "Proper repair materials ordered", 
-                "Work scheduled for completion by Jan 15"
-            ]
-        }
+        # Get real status history from database
+        status_data = await supabase_issues.get_issue_status_history(issue_id)
         
-        return {
-            "success": True,
-            "status": mock_status
-        }
+        if status_data:
+            return {
+                "success": True,
+                "status": status_data
+            }
+        else:
+            raise HTTPException(status_code=404, detail="Issue not found")
+            
+    except HTTPException:
+        raise
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get status: {str(e)}")
@@ -404,19 +436,30 @@ async def get_issue_status(issue_id: str):
 async def update_issue_status(
     issue_id: str,
     status: str = Form(...),
-    note: str = Form(None)
+    note: str = Form(None),
+    updated_by_user_id: str = Form(...)
 ):
     """
-    Update issue status (for officers) - DUMMY IMPLEMENTATION
+    Update issue status (for officers) using real Supabase database
     """
     try:
-        # Mock status update
-        return {
-            "success": True,
-            "message": f"Issue {issue_id} status updated to {status}",
-            "updated_at": "2025-01-12T10:40:00Z",
-            "note": note
-        }
+        # Update issue status in database with real data
+        result = await supabase_issues.update_issue_status(
+            issue_id=issue_id, 
+            status=status, 
+            officer_notes=note,
+            updated_by_user_id=updated_by_user_id
+        )
+        
+        if result:
+            return {
+                "success": True,
+                "message": f"Issue {issue_id} status updated to {status}",
+                "updated_at": result.get("updated_at"),
+                "note": note
+            }
+        else:
+            raise HTTPException(status_code=404, detail="Issue not found or update failed")
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update status: {str(e)}")
@@ -592,6 +635,342 @@ async def get_sri_lankan_districts():
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get districts: {str(e)}")
+
+
+@router.post("/nearby", response_model=dict)
+async def get_nearby_issues(request: NearbyIssuesRequest):
+    """
+    Get issues near a specific location using Supabase REST API
+    """
+    try:
+        # Try to fetch from Supabase first
+        if supabase_client.is_available:
+            try:
+                nearby_issues = await supabase_issues.get_nearby_issues(
+                    latitude=request.latitude,
+                    longitude=request.longitude,
+                    radius_km=request.radius_km,
+                    limit=request.limit
+                )
+                
+                if nearby_issues:
+                    return {
+                        "success": True,
+                        "message": f"Found {len(nearby_issues)} nearby issues from database",
+                        "issues": nearby_issues,
+                        "search_params": {
+                            "latitude": request.latitude,
+                            "longitude": request.longitude,
+                            "radius_km": request.radius_km,
+                            "limit": request.limit
+                        }
+                    }
+            except Exception as db_error:
+                print(f"Database fetch failed: {db_error}")
+        
+        # Fallback to mock data with calculated distances
+        import math
+        
+        # Mock issues with real locations around Sri Lanka
+        mock_issues = [
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Large pothole on Galle Road",
+                "category": "roads", 
+                "description": "Dangerous pothole causing vehicle damage near Kollupitiya Junction",
+                "location": "Galle Road, Kollupitiya, Colombo 03",
+                "latitude": 6.9089,
+                "longitude": 79.8564,
+                "status": "pending",
+                "severity_level": 3,
+                "created_at": "2025-01-12T10:15:00Z",
+                "user_id": str(uuid.uuid4())
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Broken street light near Viharamahadevi Park",
+                "category": "electricity",
+                "description": "Street light not working for 3 days, creating safety hazard",
+                "location": "Viharamahadevi Park, Cinnamon Gardens, Colombo 07", 
+                "latitude": 6.9147,
+                "longitude": 79.8560,
+                "status": "under_review",
+                "severity_level": 2,
+                "created_at": "2025-01-11T18:30:00Z",
+                "user_id": str(uuid.uuid4())
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Waste accumulation in Bambalapitiya",
+                "category": "waste",
+                "description": "Garbage not collected for over a week, causing health hazard",
+                "location": "Galle Road, Bambalapitiya, Colombo 04",
+                "latitude": 6.8947,
+                "longitude": 79.8561,
+                "status": "in_progress", 
+                "severity_level": 2,
+                "created_at": "2025-01-10T14:45:00Z",
+                "user_id": str(uuid.uuid4())
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Water pipe leak on Duplication Road",
+                "category": "water",
+                "description": "Major water leak flooding the road, disrupting traffic",
+                "location": "Duplication Road, Borella, Colombo 08",
+                "latitude": 6.9173,
+                "longitude": 79.8823,
+                "status": "assigned",
+                "severity_level": 4,
+                "created_at": "2025-01-12T06:20:00Z",
+                "user_id": str(uuid.uuid4())
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Fallen tree blocking Independence Square",
+                "category": "infrastructure",
+                "description": "Large tree fell during storm, blocking pedestrian access",
+                "location": "Independence Square, Colombo 07",
+                "latitude": 6.9034,
+                "longitude": 79.8680,
+                "status": "resolved",
+                "severity_level": 4, 
+                "created_at": "2025-01-09T22:10:00Z",
+                "user_id": str(uuid.uuid4())
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Unsafe building condition at Fort Railway Station",
+                "category": "safety",
+                "description": "Old building wall cracking near main entrance",
+                "location": "Fort Railway Station, Colombo 01",
+                "latitude": 6.9344,
+                "longitude": 79.8428,
+                "status": "pending",
+                "severity_level": 3,
+                "created_at": "2025-01-11T12:30:00Z", 
+                "user_id": str(uuid.uuid4())
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Road surface damage near Temple of the Tooth",
+                "category": "roads",
+                "description": "Severe road damage affecting tourist traffic",
+                "location": "Temple of the Tooth, Kandy",
+                "latitude": 7.2906,
+                "longitude": 80.6337,
+                "status": "pending",
+                "severity_level": 3,
+                "created_at": "2025-01-12T09:00:00Z",
+                "user_id": str(uuid.uuid4())
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Power outage in Galle Fort area",
+                "category": "electricity",
+                "description": "Frequent power cuts affecting businesses",
+                "location": "Galle Fort, Galle",
+                "latitude": 6.0235,
+                "longitude": 80.2168,
+                "status": "under_review",
+                "severity_level": 2,
+                "created_at": "2025-01-11T16:45:00Z",
+                "user_id": str(uuid.uuid4())
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Damaged drainage system in Negombo",
+                "category": "infrastructure",
+                "description": "Blocked drainage causing flooding during rain",
+                "location": "Main Street, Negombo",
+                "latitude": 7.2084,
+                "longitude": 79.8380,
+                "status": "assigned",
+                "severity_level": 3,
+                "created_at": "2025-01-10T11:20:00Z",
+                "user_id": str(uuid.uuid4())
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Water quality issue in Kurunegala",
+                "category": "water",
+                "description": "Discolored water supply affecting entire neighborhood",
+                "location": "Clock Tower Area, Kurunegala",
+                "latitude": 7.4818,
+                "longitude": 80.3609,
+                "status": "in_progress",
+                "severity_level": 3,
+                "created_at": "2025-01-09T14:30:00Z",
+                "user_id": str(uuid.uuid4())
+            }
+        ]
+        
+        # Calculate distances and filter by radius
+        def calculate_distance(lat1, lon1, lat2, lon2):
+            """Calculate distance between two points using Haversine formula"""
+            R = 6371  # Earth's radius in km
+            
+            lat1_rad, lon1_rad = math.radians(lat1), math.radians(lon1)
+            lat2_rad, lon2_rad = math.radians(lat2), math.radians(lon2)
+            
+            dlat = lat2_rad - lat1_rad
+            dlon = lon2_rad - lon1_rad
+            
+            a = math.sin(dlat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon/2)**2
+            c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+            
+            return R * c
+        
+        # Add distance to each issue and filter
+        nearby_issues = []
+        for issue in mock_issues:
+            distance = calculate_distance(
+                request.latitude, request.longitude,
+                issue["latitude"], issue["longitude"]
+            )
+            
+            if distance <= request.radius_km:
+                issue["distance_km"] = round(distance, 2)
+                nearby_issues.append(issue)
+        
+        # Sort by distance and limit results
+        nearby_issues.sort(key=lambda x: x["distance_km"])
+        nearby_issues = nearby_issues[:request.limit]
+        
+        return {
+            "success": True,
+            "message": f"Found {len(nearby_issues)} nearby issues (mock mode)",
+            "issues": nearby_issues,
+            "search_params": {
+                "latitude": request.latitude,
+                "longitude": request.longitude,
+                "radius_km": request.radius_km,
+                "limit": request.limit
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch nearby issues: {str(e)}")
+
+@router.get("/all", response_model=dict)
+async def get_all_issues(
+    category: Optional[str] = None,
+    status: Optional[str] = None,
+    department_id: Optional[str] = None,
+    authority_id: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100
+):
+    """
+    Get all issues with optional filtering for admin/officer views
+    """
+    try:
+        # Try to fetch from Supabase first
+        if supabase_client.is_available:
+            try:
+                # If authority_id is provided, use the authority-specific method
+                if authority_id:
+                    all_issues = await supabase_issues.get_issues_by_authority_category(
+                        authority_id=authority_id,
+                        category=category,
+                        status=status,
+                        limit=limit,
+                        offset=skip
+                    )
+                else:
+                    all_issues = await supabase_issues.get_all_issues(
+                        category=category,
+                        status=status,
+                        department_id=department_id,
+                        authority_id=authority_id,
+                        limit=limit,
+                        offset=skip
+                    )
+                
+                if all_issues:
+                    return {
+                        "success": True,
+                        "message": f"Fetched {len(all_issues)} issues from database",
+                        "issues": all_issues,
+                        "filters": {
+                            "category": category,
+                            "status": status,
+                            "department_id": department_id,
+                            "authority_id": authority_id
+                        }
+                    }
+            except Exception as db_error:
+                print(f"Database fetch failed: {db_error}")
+        
+        # Fallback to mock data
+        mock_issues = [
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Road repair needed",
+                "category": "roads",
+                "description": "Multiple potholes on main road",
+                "location": "Kandy Road, Colombo",
+                "status": "pending",
+                "severity_level": 2,
+                "created_at": "2025-01-12T08:00:00Z",
+                "user_id": str(uuid.uuid4()),
+                "latitude": 6.9218,
+                "longitude": 79.8604
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Power outage",
+                "category": "electricity", 
+                "description": "Entire area without power for 6 hours",
+                "location": "Mount Lavinia",
+                "status": "in_progress",
+                "severity_level": 3,
+                "created_at": "2025-01-11T20:00:00Z", 
+                "user_id": str(uuid.uuid4()),
+                "latitude": 6.8373,
+                "longitude": 79.8638
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Water supply disruption",
+                "category": "water",
+                "description": "No water supply for 2 days",
+                "location": "Nugegoda",
+                "status": "resolved",
+                "severity_level": 3,
+                "created_at": "2025-01-10T12:00:00Z",
+                "user_id": str(uuid.uuid4()),
+                "latitude": 6.8649,
+                "longitude": 79.8997
+            }
+        ]
+        
+        # Apply filters
+        filtered_issues = mock_issues
+        
+        if category:
+            filtered_issues = [issue for issue in filtered_issues if issue["category"] == category]
+        
+        if status:
+            filtered_issues = [issue for issue in filtered_issues if issue["status"] == status]
+        
+        # Apply pagination
+        filtered_issues = filtered_issues[skip:skip+limit]
+        
+        return {
+            "success": True,
+            "message": f"Fetched {len(filtered_issues)} issues (mock mode)",
+            "issues": filtered_issues,
+            "filters": {
+                "category": category,
+                "status": status,
+                "department_id": department_id,
+                "authority_id": authority_id
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch issues: {str(e)}")
 
 @router.post("/analyze-image-with-location", response_model=dict)
 async def analyze_image_with_enhanced_location(

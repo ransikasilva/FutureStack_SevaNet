@@ -256,4 +256,38 @@
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
+
+  /* Leaflet Map Styles */
+  .leaflet-container {
+    @apply rounded-2xl;
+    z-index: 1;
+  }
+
+  .leaflet-popup-content-wrapper {
+    @apply rounded-xl shadow-lg border-0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+  }
+
+  .leaflet-popup-content {
+    @apply m-0;
+  }
+
+  .leaflet-popup-tip {
+    background: rgba(255, 255, 255, 0.95);
+  }
+
+  .leaflet-control-container {
+    z-index: 999;
+  }
+
+  .custom-div-icon {
+    background: none !important;
+    border: none !important;
+  }
+
+  /* Hide Leaflet attribution for cleaner look */
+  .leaflet-control-attribution {
+    @apply text-xs opacity-60;
+  }
 }

@@ -13,6 +13,8 @@ export interface Issue {
   title?: string
   description: string
   location: string
+  latitude?: number
+  longitude?: number
   image_url?: string
   status: 'pending' | 'under_review' | 'assigned' | 'in_progress' | 'resolved' | 'closed'
   severity_level: 1 | 2 | 3 | 4
@@ -231,16 +233,164 @@ export async function getIssueStatus(issueId: string): Promise<{ success: boolea
   }
 }
 
+// Hook for getting admin issue statistics
+export function useAdminIssueStats() {
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    inProgress: 0,
+    resolved: 0,
+    critical: 0,
+    byCategoryStats: [] as Array<{ category: string; count: number; resolved: number }>,
+    recentIssues: [] as Issue[]
+  })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchAdminStats()
+  }, [])
+
+  const fetchAdminStats = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      // Fetch all issues for admin statistics
+      const response = await fetch(`${BACKEND_API_URL}/api/v1/issues/all`)
+      const data = await response.json()
+      
+      if (data.success && data.issues) {
+        const issues = data.issues as Issue[]
+        
+        // Calculate statistics
+        const total = issues.length
+        const pending = issues.filter(i => ['pending', 'under_review'].includes(i.status)).length
+        const inProgress = issues.filter(i => ['assigned', 'in_progress'].includes(i.status)).length
+        const resolved = issues.filter(i => i.status === 'resolved').length
+        const critical = issues.filter(i => i.severity_level >= 3).length
+        
+        // Group by category
+        const categoryMap = new Map<string, { count: number; resolved: number }>()
+        issues.forEach(issue => {
+          const current = categoryMap.get(issue.category) || { count: 0, resolved: 0 }
+          current.count += 1
+          if (issue.status === 'resolved') {
+            current.resolved += 1
+          }
+          categoryMap.set(issue.category, current)
+        })
+        
+        const byCategoryStats = Array.from(categoryMap.entries()).map(([category, stats]) => ({
+          category,
+          count: stats.count,
+          resolved: stats.resolved
+        })).sort((a, b) => b.count - a.count)
+        
+        // Get recent issues (last 5)
+        const recentIssues = issues
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .slice(0, 5)
+        
+        setStats({
+          total,
+          pending,
+          inProgress,
+          resolved,
+          critical,
+          byCategoryStats,
+          recentIssues
+        })
+      } else {
+        setError(data.message || 'Failed to fetch issue statistics')
+      }
+    } catch (err) {
+      console.error('Failed to fetch admin issue stats:', err)
+      setError('Failed to fetch issue statistics')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const refetch = () => {
+    fetchAdminStats()
+  }
+
+  return { stats, loading, error, refetch }
+}
+
+// Hook for getting nearby issues for map display
+export function useNearbyIssues(
+  latitude?: number, 
+  longitude?: number, 
+  radiusKm: number = 10, 
+  limitCount: number = 100
+) {
+  const [issues, setIssues] = useState<Issue[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (latitude && longitude) {
+      fetchNearbyIssues()
+    }
+  }, [latitude, longitude, radiusKm, limitCount])
+
+  const fetchNearbyIssues = async () => {
+    if (!latitude || !longitude) return
+
+    try {
+      setLoading(true)
+      setError(null)
+      
+      // Use the database function we created
+      const response = await fetch(`${BACKEND_API_URL}/api/v1/issues/nearby`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          latitude,
+          longitude,
+          radius_km: radiusKm,
+          limit: limitCount
+        })
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setIssues(data.issues || [])
+      } else {
+        setError(data.message || 'Failed to fetch nearby issues')
+      }
+    } catch (err) {
+      console.error('Failed to fetch nearby issues:', err)
+      setError('Failed to fetch nearby issues')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const refetch = () => {
+    fetchNearbyIssues()
+  }
+
+  return { issues, loading, error, refetch }
+}
+
 // Function to update issue status (for officers)
 export async function updateIssueStatus(
   issueId: string, 
   status: string, 
-  note?: string
+  note?: string,
+  updatedByUserId?: string
 ): Promise<{ success: boolean; message?: string }> {
   try {
     const formData = new FormData()
     formData.append('status', status)
     if (note) formData.append('note', note)
+    if (updatedByUserId) formData.append('updated_by_user_id', updatedByUserId)
 
     const response = await fetch(`${BACKEND_API_URL}/api/v1/issues/${issueId}/update`, {
       method: 'PUT',
@@ -261,27 +411,46 @@ export async function updateIssueStatus(
 }
 
 // Hook for officers to get department issues
-export function useDepartmentIssues(departmentId?: string, category?: string) {
+export function useDepartmentIssues(departmentId?: string, category?: string, authorityId?: string) {
   const [issues, setIssues] = useState<Issue[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (departmentId || category) {
-      fetchDepartmentIssues()
-    }
-  }, [departmentId, category])
+    fetchDepartmentIssues()
+  }, [departmentId, category, authorityId])
 
   const fetchDepartmentIssues = async () => {
     try {
       setLoading(true)
-      // For now, we'll use mock data since the backend doesn't have department-specific filtering yet
-      // In a real implementation, this would call a backend endpoint that filters by department
-      const response = await fetch(`${BACKEND_API_URL}/api/v1/issues/categories`)
+      setError(null)
+      
+      // Build URL with query parameters for filtering
+      let url = `${BACKEND_API_URL}/api/v1/issues/all`
+      const params = new URLSearchParams()
+      
+      if (category && category !== 'all') {
+        params.append('category', category)
+      }
+      if (departmentId) {
+        params.append('department_id', departmentId)
+      }
+      if (authorityId) {
+        params.append('authority_id', authorityId)
+      }
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`
+      }
+      
+      const response = await fetch(url)
       const data = await response.json()
       
-      // Mock department issues - in production this would be a proper API endpoint
-      setIssues([])
+      if (data.success) {
+        setIssues(data.issues || [])
+      } else {
+        setError(data.message || 'Failed to fetch issues')
+      }
     } catch (err) {
       console.error('Failed to fetch department issues:', err)
       setError('Failed to fetch department issues')

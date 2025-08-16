@@ -54,8 +54,20 @@ export function LoginForm({ onSuccess, redirectTo = '/dashboard' }: LoginFormPro
                 console.log('Login - Redirecting admin to /admin')
                 break
               case 'officer':
-                finalRedirectTo = '/officer'
-                console.log('Login - Redirecting officer to /officer')
+                // Check if officer has authority_id (authority officer) or department_id (service officer)
+                const { data: fullProfile } = await supabase
+                  .from('profiles')
+                  .select('department_id, authority_id')
+                  .eq('user_id', result.user.id)
+                  .single()
+                
+                if (fullProfile?.authority_id) {
+                  finalRedirectTo = '/authority'
+                  console.log('Login - Redirecting authority officer to /authority')
+                } else {
+                  finalRedirectTo = '/officer'
+                  console.log('Login - Redirecting department officer to /officer')
+                }
                 break
               default: // citizen
                 finalRedirectTo = '/dashboard'

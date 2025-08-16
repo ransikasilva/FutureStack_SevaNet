@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuthContext } from '@/components/auth/AuthProvider'
 import { supabase } from '@/lib/supabase'
+import { useAdminIssueStats } from '@/hooks/useIssues'
 import Link from 'next/link'
 import { 
   BarChart3, 
@@ -18,8 +19,12 @@ import {
   Activity,
   Shield,
   Building,
-  Eye
+  Eye,
+  MapPin,
+  TrendingUp
 } from 'lucide-react'
+import { format } from 'date-fns'
+import { IssueAnalyticsDashboard } from '@/components/analytics/IssueAnalyticsDashboard'
 
 interface AdminStats {
   totalAppointments: number
@@ -38,6 +43,7 @@ export default function AdminDashboard() {
   const { user } = useAuthContext()
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [loading, setLoading] = useState(true)
+  const { stats: issueStats, loading: issueLoading, error: issueError } = useAdminIssueStats()
 
   useEffect(() => {
     console.log('Admin dashboard useEffect triggered', {
@@ -316,8 +322,220 @@ export default function AdminDashboard() {
             </div>
           </div>
 
+          {/* Civic Issues Analytics */}
+          <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-50/50 via-red-50/30 to-orange-50/20"></div>
+            
+            <div className="relative px-10 py-8 border-b border-red-100/50">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center mb-3">
+                    <div className="bg-red-100 p-2 rounded-xl mr-3">
+                      <AlertTriangle className="h-6 w-6 text-red-600" />
+                    </div>
+                    <span className="text-red-600 text-sm font-bold uppercase tracking-wide">Civic Issues Management</span>
+                  </div>
+                  <h2 className="text-3xl font-black text-gray-900 mb-2">Infrastructure Issues Overview</h2>
+                  <p className="text-lg text-gray-600">Monitor and analyze reported civic infrastructure issues</p>
+                </div>
+                <Link
+                  href="/admin/issues"
+                  className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-red-50 to-orange-50 text-red-600 hover:from-red-100 hover:to-orange-100 font-bold rounded-2xl border border-red-200 hover:border-red-300 transition-all duration-300 hover:scale-105"
+                >
+                  View All Issues
+                  <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
+            </div>
+            
+            <div className="relative p-10">
+              {issueLoading ? (
+                <div className="text-center py-8">
+                  <div className="relative mx-auto w-12 h-12 mb-4">
+                    <div className="absolute inset-0 rounded-full border-4 border-red-200"></div>
+                    <div className="absolute inset-0 rounded-full border-4 border-red-600 border-t-transparent animate-spin"></div>
+                  </div>
+                  <p className="text-gray-600">Loading issue statistics...</p>
+                </div>
+              ) : issueError ? (
+                <div className="text-center py-8">
+                  <AlertTriangle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+                  <p className="text-red-600">{issueError}</p>
+                </div>
+              ) : (
+                <>
+                  {/* Issues Statistics Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-red-100">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-xl">
+                          <AlertTriangle className="h-6 w-6 text-white" />
+                        </div>
+                        <div className="text-right">
+                          <div className="text-3xl font-black text-gray-900">{issueStats.total}</div>
+                          <div className="text-xs text-red-600 font-bold uppercase tracking-wide">Total</div>
+                        </div>
+                      </div>
+                      <h3 className="text-lg font-bold text-gray-900">Total Issues</h3>
+                      <p className="text-sm text-gray-600 mt-1">All reported issues</p>
+                    </div>
+
+                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-yellow-100">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="p-3 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl">
+                          <Clock className="h-6 w-6 text-white" />
+                        </div>
+                        <div className="text-right">
+                          <div className="text-3xl font-black text-gray-900">{issueStats.pending}</div>
+                          <div className="text-xs text-orange-600 font-bold uppercase tracking-wide">Pending</div>
+                        </div>
+                      </div>
+                      <h3 className="text-lg font-bold text-gray-900">Pending Review</h3>
+                      <p className="text-sm text-gray-600 mt-1">Awaiting action</p>
+                    </div>
+
+                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-blue-100">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl">
+                          <TrendingUp className="h-6 w-6 text-white" />
+                        </div>
+                        <div className="text-right">
+                          <div className="text-3xl font-black text-gray-900">{issueStats.inProgress}</div>
+                          <div className="text-xs text-blue-600 font-bold uppercase tracking-wide">Active</div>
+                        </div>
+                      </div>
+                      <h3 className="text-lg font-bold text-gray-900">In Progress</h3>
+                      <p className="text-sm text-gray-600 mt-1">Being worked on</p>
+                    </div>
+
+                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-green-100">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl">
+                          <CheckCircle className="h-6 w-6 text-white" />
+                        </div>
+                        <div className="text-right">
+                          <div className="text-3xl font-black text-gray-900">{issueStats.resolved}</div>
+                          <div className="text-xs text-green-600 font-bold uppercase tracking-wide">Resolved</div>
+                        </div>
+                      </div>
+                      <h3 className="text-lg font-bold text-gray-900">Resolved</h3>
+                      <p className="text-sm text-gray-600 mt-1">Completed</p>
+                    </div>
+
+                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-red-200">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="p-3 bg-gradient-to-br from-red-600 to-red-700 rounded-xl">
+                          <AlertTriangle className="h-6 w-6 text-white" />
+                        </div>
+                        <div className="text-right">
+                          <div className="text-3xl font-black text-gray-900">{issueStats.critical}</div>
+                          <div className="text-xs text-red-600 font-bold uppercase tracking-wide">Critical</div>
+                        </div>
+                      </div>
+                      <h3 className="text-lg font-bold text-gray-900">High Priority</h3>
+                      <p className="text-sm text-gray-600 mt-1">Urgent issues</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Issues by Category */}
+                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200">
+                      <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                        <BarChart3 className="h-5 w-5 mr-2 text-blue-600" />
+                        Issues by Category
+                      </h3>
+                      {issueStats.byCategoryStats.length > 0 ? (
+                        <div className="space-y-3">
+                          {issueStats.byCategoryStats.slice(0, 5).map((category) => (
+                            <div key={category.category} className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <div className="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+                                <span className="text-sm font-medium text-gray-700 capitalize">
+                                  {category.category}
+                                </span>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-gray-600">{category.count}</span>
+                                <div className="text-xs text-green-600">
+                                  ({category.resolved} resolved)
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-center py-4">No category data available</p>
+                      )}
+                    </div>
+
+                    {/* Recent Issues */}
+                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200">
+                      <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                        <Activity className="h-5 w-5 mr-2 text-red-600" />
+                        Recent Issues
+                      </h3>
+                      {issueStats.recentIssues.length > 0 ? (
+                        <div className="space-y-3">
+                          {issueStats.recentIssues.map((issue) => (
+                            <div key={issue.id} className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-gray-900">
+                                  {issue.title || `${issue.category} Issue`}
+                                </p>
+                                <div className="flex items-center mt-1 text-xs text-gray-500">
+                                  <MapPin className="h-3 w-3 mr-1" />
+                                  {issue.location}
+                                  <span className="mx-2">•</span>
+                                  {format(new Date(issue.created_at), 'MMM d')}
+                                </div>
+                              </div>
+                              <span className={`px-2 py-1 rounded-lg text-xs font-bold ${
+                                issue.status === 'pending' ? 'text-yellow-600 bg-yellow-100' :
+                                issue.status === 'resolved' ? 'text-green-600 bg-green-100' :
+                                issue.status === 'in_progress' ? 'text-blue-600 bg-blue-100' :
+                                'text-gray-600 bg-gray-100'
+                              }`}>
+                                {issue.status.replace('_', ' ')}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-center py-4">No recent issues</p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Comprehensive Issues Analytics Dashboard */}
+          <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-50/50 via-blue-50/30 to-indigo-50/20"></div>
+            
+            <div className="relative px-10 py-8 border-b border-blue-100/50">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center mb-3">
+                    <div className="bg-blue-100 p-2 rounded-xl mr-3">
+                      <BarChart3 className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <span className="text-blue-600 text-sm font-bold uppercase tracking-wide">Advanced Analytics</span>
+                  </div>
+                  <h2 className="text-3xl font-black text-gray-900 mb-2">Issues Analytics Dashboard</h2>
+                  <p className="text-lg text-gray-600">Comprehensive data visualization and performance insights</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="relative p-10">
+              <IssueAnalyticsDashboard timeRange={30} />
+            </div>
+          </div>
+
           {/* Premium Quick Actions Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <Link
               href="/admin/analytics"
               className="group relative bg-white/95 backdrop-blur-xl rounded-3xl p-10 hover:shadow-2xl hover:scale-105 transition-all duration-500 border border-white/20 overflow-hidden"
@@ -385,6 +603,30 @@ export default function AdminDashboard() {
                 </p>
                 <div className="mt-6 flex items-center text-purple-600 font-bold group-hover:text-purple-800 transition-colors">
                   <span>Configure Services</span>
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-2 transition-transform" />
+                </div>
+              </div>
+            </Link>
+
+            <Link
+              href="/admin/issues"
+              className="group relative bg-white/95 backdrop-blur-xl rounded-3xl p-10 hover:shadow-2xl hover:scale-105 transition-all duration-500 border border-white/20 overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-red-50/50 via-orange-50/30 to-red-50/50"></div>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full -mr-16 -mt-16"></div>
+              
+              <div className="relative">
+                <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-red-500 to-red-600 rounded-3xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 mb-8 shadow-xl">
+                  <AlertTriangle className="h-10 w-10 text-white group-hover:animate-pulse" />
+                </div>
+                <h3 className="text-2xl font-black text-gray-900 mb-4 group-hover:text-red-700 transition-colors">
+                  Issues Management
+                </h3>
+                <p className="text-gray-600 leading-relaxed text-lg">
+                  Monitor and manage civic infrastructure issues reported by citizens. Track resolution progress and coordinate with departments.
+                </p>
+                <div className="mt-6 flex items-center text-red-600 font-bold group-hover:text-red-800 transition-colors">
+                  <span>Manage Issues</span>
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-2 transition-transform" />
                 </div>
               </div>

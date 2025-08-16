@@ -59,6 +59,7 @@ class SupabaseClient:
         columns: str = "*", 
         filters: Optional[Dict[str, Any]] = None,
         limit: Optional[int] = None,
+        offset: Optional[int] = None,
         order: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """Select records from a table"""
@@ -71,7 +72,24 @@ class SupabaseClient:
             # Add filters
             if filters:
                 for key, value in filters.items():
-                    url += f"&{key}=eq.{value}"
+                    # Handle special filter syntax for PostgREST
+                    if key.endswith('.not.is'):
+                        # For "not is null" queries
+                        field_name = key.replace('.not.is', '')
+                        if value == "null":
+                            url += f"&{field_name}=not.is.null"
+                        else:
+                            url += f"&{field_name}=not.eq.{value}"
+                    elif key.endswith('.is'):
+                        # For "is null" queries
+                        field_name = key.replace('.is', '')
+                        if value == "null":
+                            url += f"&{field_name}=is.null"
+                        else:
+                            url += f"&{field_name}=eq.{value}"
+                    else:
+                        # Standard equality filter
+                        url += f"&{key}=eq.{value}"
             
             # Add ordering
             if order:
@@ -80,6 +98,10 @@ class SupabaseClient:
             # Add limit
             if limit:
                 url += f"&limit={limit}"
+            
+            # Add offset
+            if offset:
+                url += f"&offset={offset}"
             
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, headers=self.headers)

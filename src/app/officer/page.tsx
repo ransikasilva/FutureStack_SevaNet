@@ -11,7 +11,8 @@ import {
   Users, 
   AlertCircle,
   TrendingUp,
-  Eye
+  Eye,
+  AlertTriangle
 } from 'lucide-react'
 import { format } from 'date-fns'
 import Link from 'next/link'
@@ -192,7 +193,7 @@ function OfficerDashboardContent() {
       </div>
 
       {/* Premium Quick Actions Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-8">
         <Link
           href="/officer/appointments"
           className="group relative bg-white/95 backdrop-blur-xl rounded-3xl p-10 hover:shadow-2xl hover:scale-105 transition-all duration-500 border border-white/20 overflow-hidden"
@@ -264,6 +265,50 @@ function OfficerDashboardContent() {
             </div>
           </div>
         </Link>
+
+        <Link
+          href="/officer/issues"
+          className="group relative bg-white/95 backdrop-blur-xl rounded-3xl p-10 hover:shadow-2xl hover:scale-105 transition-all duration-500 border border-white/20 overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-red-50/50 via-orange-50/30 to-red-50/50"></div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full -mr-16 -mt-16"></div>
+          
+          <div className="relative">
+            <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-red-500 to-red-600 rounded-3xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 mb-8 shadow-xl">
+              <AlertTriangle className="h-10 w-10 text-white group-hover:animate-pulse" />
+            </div>
+            <h3 className="text-2xl font-black text-gray-900 mb-4 group-hover:text-red-700 transition-colors">
+              Civic Issues
+            </h3>
+            <p className="text-gray-600 leading-relaxed text-lg">
+              Review and manage reported civic issues from citizens. Update statuses, assign resources, and coordinate with relevant authorities.
+            </p>
+            <div className="mt-6 flex items-center text-red-600 font-bold group-hover:text-red-800 transition-colors">
+              <span>New Issue Reports</span>
+              <AlertCircle className="ml-2 h-5 w-5 group-hover:translate-x-2 transition-transform" />
+            </div>
+          </div>
+        </Link>
+
+        <div className="group relative bg-white/95 backdrop-blur-xl rounded-3xl p-10 border border-white/20 overflow-hidden opacity-75">
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-50/50 via-slate-50/30 to-gray-50/50"></div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gray-500/10 rounded-full -mr-16 -mt-16"></div>
+          
+          <div className="relative">
+            <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-gray-400 to-gray-500 rounded-3xl mb-8 shadow-xl">
+              <TrendingUp className="h-10 w-10 text-white" />
+            </div>
+            <h3 className="text-2xl font-black text-gray-600 mb-4">
+              Analytics Dashboard
+            </h3>
+            <p className="text-gray-500 leading-relaxed text-lg">
+              View department performance metrics, citizen satisfaction scores, and operational insights.
+            </p>
+            <div className="mt-6 flex items-center text-gray-500 font-bold">
+              <span>Coming Soon</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Next Appointment */}

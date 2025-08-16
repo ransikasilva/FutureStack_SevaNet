@@ -482,12 +482,18 @@ function ProfileContent() {
   )
 }
 
+function ProfilePageWrapper() {
+  return (
+    <ProtectedRoute allowedRoles={['citizen', 'officer', 'admin']}>
+      <ProfileContent />
+    </ProtectedRoute>
+  )
+}
+
 export default function ProfilePage() {
   return (
-    <ProtectedRoute allowedRoles={['citizen']}>
-      <DashboardLayout>
-        <ProfileContent />
-      </DashboardLayout>
-    </ProtectedRoute>
+    <DashboardLayout>
+      <ProfilePageWrapper />
+    </DashboardLayout>
   )
 }
